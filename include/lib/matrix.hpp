@@ -18,8 +18,6 @@ class Matrix
 
     size_t length;
 
-
-
 public:
 
     Matrix(T* data, uint16_t w, uint16_t h, uint8_t ch);
@@ -41,7 +39,7 @@ public:
 
     size_t size() const;
 
-    // Modifying size
+    // TODO: Modifying size
     // apppendRow
     void appendRow();
     // appendColumn
@@ -91,7 +89,7 @@ inline T& Matrix<T>::operator()(size_t index)
 {
     if(index > length - 1)
     {
-        throw std::exception("Array index too large");
+        throw std::runtime_error("Array index too large");
     }
     return raw_data[index];
 }
@@ -101,7 +99,7 @@ inline T& Matrix<T>::operator()(size_t x, size_t y)
 {
     if(x > f_width - 1 || y > height - 1)
     {
-        throw std::exception("Index out of bounds");
+        throw std::runtime_error("Index out of bounds");
     }
 
     size_t idx = x + y * f_width;
@@ -111,6 +109,14 @@ inline T& Matrix<T>::operator()(size_t x, size_t y)
 template<typename T>
 inline T& Matrix<T>::operator()(size_t x, size_t y, uint8_t ch)
 {
+    if(x > width - 1 || y > height - 1)
+    {
+        throw std::runtime_error("Index out of bounds");
+    }
+    if(ch > channels)
+    {
+        throw std::runtime_error("Channel number out of range");
+    }
     return getPixelCh(x,y,ch);
 }
 
@@ -119,7 +125,7 @@ inline T& Matrix<T>::operator[](size_t index)
 {
     if(index > length - 1)
     {
-        throw std::exception("Array index too large");
+        throw std::runtime_error("Array index too large");
     }
     return raw_data[index];
 }
@@ -129,7 +135,7 @@ inline const std::vector<std::reference_wrapper<T>> Matrix<T>::getPixel(size_t x
 {
     if(x > width - 1 || y > height - 1)
     {
-        throw std::exception("Index out of bounds");
+        throw std::runtime_error("Index out of bounds");
     }
     // Returns a vector of REFERENCES to each particular channel
     // R, G, B; Y, Cb, Cr; etc.
@@ -151,20 +157,13 @@ inline size_t Matrix<T>::size() const
 template<typename T>
 inline T& Matrix<T>::getPixelCh(size_t x, size_t y, uint8_t ch)
 {
-    if(x > width - 1 || y > height - 1)
-    {
-        throw std::exception("Index out of bounds");
-    }
-    if(ch > channels)
-    {
-        throw std::exception("Channel out of range");
-    }
     // Returns a vector of REFERENCES to each particular channel
     // R, G, B; Y, Cb, Cr; etc.
     size_t base_idx = (x + y * width) * channels;
     return raw_data[base_idx + ch];
 }
 
+// TODO: Append functions
 template<typename T>
 inline void Matrix<T>::appendRow()
 {
@@ -201,6 +200,6 @@ inline void Matrix<T>::appendColumn()
     }
     catch(const std::exception& e)
     {
-        std::cerr << e.what() << '\n';
+        //std::cerr << e.what() << '\n';
     }
 }
