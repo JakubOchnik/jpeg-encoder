@@ -51,7 +51,7 @@ jobs:
       uses: deep5050/cppcheck-action@v3.0
       with:
           github_token: ${{ secrets.GITHUB_TOKEN}}
-  
+          exclude_check: opencv-install/
     - name: Publish CppCheck report    
       uses: mikeal/publish-to-github-action@master
       env:
