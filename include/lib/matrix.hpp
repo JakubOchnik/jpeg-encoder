@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <functional>
 #include <iostream>
+#include <cstring>
 
 template<typename T>
 class Matrix
