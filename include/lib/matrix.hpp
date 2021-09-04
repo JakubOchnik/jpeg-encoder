@@ -4,6 +4,7 @@
 #include <vector>
 #include <cstdlib>
 #include <functional>
+#include <iostream>
 
 template<typename T>
 class Matrix
@@ -17,11 +18,12 @@ class Matrix
     uint8_t channels;
 
     size_t length;
-
+    bool outsideAlloc;
 public:
 
     Matrix(T* data, uint16_t w, uint16_t h, uint8_t ch);
     Matrix() = delete;
+    ~Matrix();
 
     uint16_t getWidth() const;
     uint16_t getHeight() const;
@@ -38,12 +40,14 @@ public:
     T& getPixelCh(size_t x, size_t y, uint8_t ch);
 
     size_t size() const;
-
+    void printMatrix();
     // TODO: Modifying size
     // apppendRow
-    void appendRow();
+    void duplicateLastRow();
     // appendColumn
-    void appendColumn();
+    void duplicateLastColumn();
+
+    void clean();
 };
 
 
@@ -82,6 +86,7 @@ inline Matrix<T>::Matrix(T* data, uint16_t w, uint16_t h, uint8_t ch): raw_data(
     f_width = width * channels;
     f_height = height;
     length = width * height * channels;
+    outsideAlloc = true;
 }
 
 template<typename T>
@@ -163,12 +168,11 @@ inline T& Matrix<T>::getPixelCh(size_t x, size_t y, uint8_t ch)
     return raw_data[base_idx + ch];
 }
 
-// TODO: Append functions
 template<typename T>
-inline void Matrix<T>::appendRow()
+inline void Matrix<T>::duplicateLastRow()
 {
     int y = height - 1;
-    size_t new_length = length + width * 3;
+    size_t new_length = length + f_width;
     T* raw_new = nullptr;
     try
     {
@@ -178,19 +182,25 @@ inline void Matrix<T>::appendRow()
     {
         throw;
     }
+
     // copy existing array
     memcpy(raw_new,raw_data,length*sizeof(T));
     // copy last row
-    memcpy(&raw_new[length], &(*this(0,height-1)), width*channels*sizeof(T));
+    size_t idx = 0 + f_width * (height - 1);
+    memcpy(&raw_new[length], &raw_data[idx], f_width*sizeof(T));
     
-    delete [] raw_data;
+    // Assume, that current data is allocated on the heap.
+    if(!outsideAlloc)
+        delete [] raw_data;
+
+    outsideAlloc = false;
     raw_data = raw_new;
     height += 1;
-    length += width*channels;
+    length += f_width;
 }
-// appendColumn
+// TODO
 template<typename T>
-inline void Matrix<T>::appendColumn()
+inline void Matrix<T>::duplicateLastColumn()
 {
     int x = width - 1;
     size_t new_length = length + width * 3;
@@ -202,4 +212,27 @@ inline void Matrix<T>::appendColumn()
     {
         //std::cerr << e.what() << '\n';
     }
+}
+
+template<typename T>
+inline void Matrix<T>::printMatrix()
+{
+    for(int i{0}; i<height; ++i)
+    {
+        for(int j{0}; j<f_width; ++j)
+        {
+            if(j > 0 && j%3==0)
+                std::cout << "|";
+            std::cout << static_cast<int>((*this)(j,i)) << " ";
+        }
+        std::cout << "\n";
+    }
+    std::cout << "\n";
+}
+
+template<typename T>
+Matrix<T>::~Matrix()
+{
+    if(!outsideAlloc)
+        delete [] raw_data;
 }
