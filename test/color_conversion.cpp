@@ -1,6 +1,7 @@
 #include <utils.hpp>
 #include <cassert>
 #include <cmath>
+#include <smartAssert.hpp>
 
 bool validate_fwd(unsigned char* out)
 {
@@ -32,8 +33,8 @@ int main()
 {
     unsigned char arr[] = {1,128,255,255,255,255};
     color::rgb2ycbcr<unsigned char>(arr,6);
-    assert(validate_fwd(arr));
+    M_Assert(validate_fwd(arr) == true, "Failed to convert RGB => YCbCr: Values don't match");
     color::ycbcr2rgb<unsigned char>(arr,6);
-    assert(validate_rwd(arr));
+    M_Assert(validate_rwd(arr) == true, "Failed to convert YCbCr => RGB: Values don't match");
     return 0;
 }

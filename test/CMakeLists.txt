@@ -1,10 +1,14 @@
 include_directories(${INCLUDE_DIR})
 cmake_policy(SET CMP0110 NEW)
 
-add_executable(color_conv ${TEST_DIR}/color_conversion.cpp)
-target_link_libraries( color_conv ${OpenCV_LIBS})
-add_test("Color conversion (RGB/YCbCr)" color_conv)
+add_subdirectory(${TEST_DIR}/assert)
 
-#add_executable(hmmm ${TEST_DIR}/abcd.cpp)
-#target_link_libraries( hmmm ${OpenCV_LIBS})
-#add_test(Eluwina hmmm)
+add_executable(color_conv ${TEST_DIR}/color_conversion.cpp)
+target_link_libraries(color_conv PRIVATE smart_assert)
+target_include_directories(color_conv PRIVATE ${TEST_DIR}/assert)
+add_test("Utils :: Color conversion (RGB<=>YCbCr)" color_conv)
+
+add_executable(mat_get_test ${TEST_DIR}/matrix_get.cpp)
+target_link_libraries(mat_get_test INTERFACE matrix mat_get_test PRIVATE smart_assert)
+target_include_directories(mat_get_test PRIVATE ${TEST_DIR}/assert)
+add_test("Matrix :: Getters" mat_get_test)

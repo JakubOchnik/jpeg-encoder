@@ -1,6 +1,5 @@
 #include <encoder.hpp>
 #include <opencv2/opencv.hpp>
-#include <lib/matrix.hpp>
 int main(int argc, char* argv[])
 {
     using namespace cv;

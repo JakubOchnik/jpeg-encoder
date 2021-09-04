@@ -1,0 +1,1 @@
+add_library(smart_assert ${TEST_DIR}/assert/smartAssert.cpp)

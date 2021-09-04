@@ -1,6 +1,7 @@
 #include <iostream>
 #include <opencv2/opencv.hpp>
 #include <utils.hpp>
+#include <lib/matrix.hpp>
 
 class Encoder
 {
