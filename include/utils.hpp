@@ -1,7 +1,49 @@
 #pragma once
 #include <cmath>
+#include <vector>
 
-namespace color{
+namespace Debug
+{
+    template<typename T>
+    void printSliceArray(T arr, int x, int y, int width, int channels)
+    {
+        int new_x = x * channels;
+        for(int i{0}; i < y; ++i)
+        {
+            for(int j{0}; j < new_x; ++j)
+            {
+                std::cout << (int)arr[j + i * width * channels] << " ";
+            }
+            std::cout << "\n";
+        }
+    }
+
+    template<typename T>
+    std::vector<uint8_t> subsampled2ycbcr(T arr, int sampledPixels, int N)
+    {
+        std::vector<uint8_t> decoded;
+        int step = sampledPixels + 2;
+        int counter = 0;
+        for(int trail{0}; trail < N; trail+=step)
+        {
+            uint8_t cb = arr[trail + sampledPixels];
+            uint8_t cr = arr[trail + sampledPixels + 1];
+            for(int i{0}; i<sampledPixels; ++i)
+            {
+                decoded.push_back(arr[trail + i]);
+                counter++;
+                decoded.push_back(cb);
+                counter++;
+                decoded.push_back(cr);
+                counter++;
+            }
+        }
+        return decoded;
+    }
+}
+
+namespace color
+{
     inline unsigned char s_round(double num)
     {
         int out = round(num);

@@ -4,11 +4,12 @@
 
 class Encoder
 {
+    cv::Mat image;
     unsigned char* raw_img;
     int width;
     int height;
-    void chromSubsample();
+    void chromaSubsample(std::vector<uint8_t>& subsampled, int pixelsToSample);
 public:
-    Encoder(unsigned char* img, int w, int h);
+    Encoder(unsigned char* img, int w, int h, cv::Mat full_img);
     void encodeImg();
 };

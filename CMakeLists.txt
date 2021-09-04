@@ -12,7 +12,7 @@ include_directories(${OpenCV_INCLUDE_DIRS} ${INCLUDE_DIR})
 add_executable(${PROJECT_NAME} main.cpp)
 add_subdirectory(src)
 
-target_link_libraries( ${PROJECT_NAME} ${OpenCV_LIBS} )
+target_link_libraries( ${PROJECT_NAME} PUBLIC ${OpenCV_LIBS} INTERFACE matrix )
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
