@@ -1,4 +1,5 @@
 # JPEG Encoder
+![build](https://github.com/JakubOchnik/jpeg-encoder/actions/workflows/cmake.yml/badge.svg)
 Work in progress!
 
 ## Working
