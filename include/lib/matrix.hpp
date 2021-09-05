@@ -12,43 +12,51 @@ class Matrix
 {
     T* raw_data;
 
+    // Pixel dimensions
     uint16_t width;
     uint16_t height;
+    // Real dimensions (f_height = height, f_width = width*channels)
     uint16_t f_width;
     uint16_t f_height;
+    // Number of channels in an image (usually 3)
     uint8_t channels;
-
+    // Real length of data in the array
     size_t length;
-    bool outsideAlloc;
+    // Flag which indicates whether a raw_data array
+    // is memory managed within the class.
+    bool memoryManaged;
 public:
 
-    Matrix(T* data, uint16_t w, uint16_t h, uint8_t ch);
+    Matrix(T* data, uint16_t w, uint16_t h, uint8_t ch, bool copy = false);
     Matrix() = delete;
     ~Matrix();
 
+    // Pixel imensions of an image
     uint16_t getWidth() const;
     uint16_t getHeight() const;
+    // F_width is a 'real' width of matrix (multiplied by number of channels)
     uint16_t getF_width() const;
     uint16_t getF_height() const;
     uint8_t getChannels() const;
 
-
+    // Raw, "flat" data index operators
     T& operator[](size_t index);
     T& operator()(size_t index);
+    // Raw, 2D operator (x is counted with channels, y is the same as pixel height)
     T& operator()(size_t x, size_t y);
+    // Pixel index operator with channel selector (range: 0-channels)
     T& operator()(size_t x, size_t y, uint8_t ch);
+    // This function returns a vector of REFERENCES to components of pixel
     const std::vector<std::reference_wrapper<T>> getPixel(size_t x, size_t y);
     T& getPixelCh(size_t x, size_t y, uint8_t ch);
-
+    // Real size getter
     size_t size() const;
+    // Prints a matrix (cout)
     void printMatrix();
-    // TODO: Modifying size
-    // apppendRow
+    // Functions which append a duplicate of last row/column n times
     void duplicateLastRow(int n = 1);
-    // appendColumn
     void duplicateLastColumn(int n = 1);
 
-    void clean();
 };
 
 
@@ -82,12 +90,22 @@ inline uint8_t Matrix<T>::getChannels() const
 }
 
 template<typename T>
-inline Matrix<T>::Matrix(T* data, uint16_t w, uint16_t h, uint8_t ch): raw_data(data), width(w), height(h), channels(ch)
+inline Matrix<T>::Matrix(T* data, uint16_t w, uint16_t h, uint8_t ch, bool copy): width(w), height(h), channels(ch)
 {
     f_width = width * channels;
     f_height = height;
     length = width * height * channels;
-    outsideAlloc = true;
+    if(copy)
+    {
+        raw_data = new T[length];
+        memcpy(raw_data, data, length * sizeof(T));
+        memoryManaged = true;
+    }
+    else
+    {
+        raw_data = data;
+        memoryManaged = false;
+    }
 }
 
 template<typename T>
@@ -195,15 +213,15 @@ inline void Matrix<T>::duplicateLastRow(int n)
     }
     
     // Assume, that current data is allocated on the heap.
-    if(!outsideAlloc)
+    if(memoryManaged)
         delete [] raw_data;
 
-    outsideAlloc = false;
+    memoryManaged = true;
     raw_data = raw_new;
     height += n;
     length += n * f_width;
 }
-// TODO
+
 template<typename T>
 inline void Matrix<T>::duplicateLastColumn(int n)
 {
@@ -234,10 +252,10 @@ inline void Matrix<T>::duplicateLastColumn(int n)
     }
 
         // Assume, that current data is allocated on the heap.
-    if(!outsideAlloc)
+    if(memoryManaged)
         delete [] raw_data;
 
-    outsideAlloc = false;
+    memoryManaged = true;
     raw_data = raw_new;
     width += n;
     f_width += n * channels;
@@ -263,6 +281,6 @@ inline void Matrix<T>::printMatrix()
 template<typename T>
 Matrix<T>::~Matrix()
 {
-    if(!outsideAlloc)
+    if(memoryManaged)
         delete [] raw_data;
 }
