@@ -44,7 +44,7 @@ public:
     void printMatrix();
     // TODO: Modifying size
     // apppendRow
-    void duplicateLastRow();
+    void duplicateLastRow(int n = 1);
     // appendColumn
     void duplicateLastColumn();
 
@@ -170,10 +170,10 @@ inline T& Matrix<T>::getPixelCh(size_t x, size_t y, uint8_t ch)
 }
 
 template<typename T>
-inline void Matrix<T>::duplicateLastRow()
+inline void Matrix<T>::duplicateLastRow(int n)
 {
     int y = height - 1;
-    size_t new_length = length + f_width;
+    size_t new_length = length + f_width * n;
     T* raw_new = nullptr;
     try
     {
@@ -188,7 +188,12 @@ inline void Matrix<T>::duplicateLastRow()
     memcpy(raw_new,raw_data,length*sizeof(T));
     // copy last row
     size_t idx = 0 + f_width * (height - 1);
-    memcpy(&raw_new[length], &raw_data[idx], f_width*sizeof(T));
+    size_t dst_idx = length;
+    for(int i{0}; i<n; ++i)
+    {
+        memcpy(&raw_new[dst_idx], &raw_data[idx], f_width*sizeof(T));
+        dst_idx += f_width;
+    }
     
     // Assume, that current data is allocated on the heap.
     if(!outsideAlloc)
@@ -196,8 +201,8 @@ inline void Matrix<T>::duplicateLastRow()
 
     outsideAlloc = false;
     raw_data = raw_new;
-    height += 1;
-    length += f_width;
+    height += n;
+    length += n * f_width;
 }
 // TODO
 template<typename T>
