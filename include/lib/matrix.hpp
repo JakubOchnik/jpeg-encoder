@@ -46,7 +46,7 @@ public:
     // apppendRow
     void duplicateLastRow(int n = 1);
     // appendColumn
-    void duplicateLastColumn();
+    void duplicateLastColumn(int n = 1);
 
     void clean();
 };
@@ -172,14 +172,13 @@ inline T& Matrix<T>::getPixelCh(size_t x, size_t y, uint8_t ch)
 template<typename T>
 inline void Matrix<T>::duplicateLastRow(int n)
 {
-    int y = height - 1;
     size_t new_length = length + f_width * n;
     T* raw_new = nullptr;
     try
     {
         raw_new = new T[new_length];
     }
-    catch(const std::exception& e)
+    catch(const std::bad_alloc& e)
     {
         throw;
     }
@@ -191,7 +190,7 @@ inline void Matrix<T>::duplicateLastRow(int n)
     size_t dst_idx = length;
     for(int i{0}; i<n; ++i)
     {
-        memcpy(&raw_new[dst_idx], &raw_data[idx], f_width*sizeof(T));
+        memcpy(&raw_new[dst_idx], &raw_data[idx], f_width * sizeof(T));
         dst_idx += f_width;
     }
     
@@ -206,18 +205,43 @@ inline void Matrix<T>::duplicateLastRow(int n)
 }
 // TODO
 template<typename T>
-inline void Matrix<T>::duplicateLastColumn()
+inline void Matrix<T>::duplicateLastColumn(int n)
 {
-    int x = width - 1;
-    size_t new_length = length + width * 3;
+    size_t new_length = length + n * height * channels;
+    T* raw_new = nullptr;
     try
     {
-        T* raw_new = new T[new_length];
+        raw_new = new T[new_length];
     }
-    catch(const std::exception& e)
+    catch(const std::bad_alloc& e)
     {
-        //std::cerr << e.what() << '\n';
+        throw;
     }
+    size_t src_idx = 0;
+    size_t dst_idx = 0;
+    for(int y{0}; y < height; ++y)
+    {
+        // Append existing row
+        memcpy(&raw_new[dst_idx], &raw_data[src_idx], f_width * sizeof(T));
+        dst_idx += f_width;
+        src_idx += f_width;
+        // Append columns
+        for(int i{0}; i < n; ++i)
+        {
+            memcpy(&raw_new[dst_idx], &raw_data[src_idx - channels], channels * sizeof(T));
+            dst_idx += channels;
+        }
+    }
+
+        // Assume, that current data is allocated on the heap.
+    if(!outsideAlloc)
+        delete [] raw_data;
+
+    outsideAlloc = false;
+    raw_data = raw_new;
+    width += n;
+    f_width += n * channels;
+    length += n * height * channels;
 }
 
 template<typename T>
