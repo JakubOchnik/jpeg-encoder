@@ -28,7 +28,7 @@ class Matrix
 public:
 
     Matrix(T* data, uint16_t w, uint16_t h, uint8_t ch, bool copy = false);
-    Matrix() = delete;
+    Matrix();
     ~Matrix();
 
     // Pixel imensions of an image
@@ -106,6 +106,13 @@ inline Matrix<T>::Matrix(T* data, uint16_t w, uint16_t h, uint8_t ch, bool copy)
         raw_data = data;
         memoryManaged = false;
     }
+}
+template<typename T>
+inline Matrix<T>::Matrix()
+{
+    f_width = f_height = height = width = length = channels = 0;
+    raw_data = nullptr;
+    memoryManaged = false;
 }
 
 template<typename T>

@@ -4,7 +4,7 @@ int main(int argc, char* argv[])
 {
     using namespace cv;
     Mat img = imread("../../Test_Image.png");
-    Encoder enc(img.data, img.cols, img.rows, img);
+    Encoder enc(img.data, img.cols, img.rows);
     enc.encodeImg();
     return 0;
 }
