@@ -1,3 +1,4 @@
+#include <cmath>
 #include <matrix.hpp>
 
 class Subsampler 

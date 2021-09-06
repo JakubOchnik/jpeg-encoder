@@ -23,8 +23,8 @@ void Subsampler::chromaSubsample(Matrix<unsigned char>& img)
                 sum_cb += img(x + i, y, 1);
                 sum_cr += img(x + i, y, 2);
             }
-        uint8_t avg_cb = round(sum_cb / 4.0f);
-        uint8_t avg_cr = round(sum_cr / 4.0f);
+        uint8_t avg_cb = std::round(sum_cb / 4.0f);
+        uint8_t avg_cr = std::round(sum_cr / 4.0f);
         subsampled.push_back(avg_cb);
         subsampled.push_back(avg_cr);
         }
