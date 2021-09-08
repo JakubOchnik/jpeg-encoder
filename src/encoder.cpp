@@ -8,7 +8,6 @@ Encoder::Encoder(unsigned char* img, int w, int h): raw_img(img), width(w), heig
 void Encoder::chromaSubsample(std::vector<uint8_t>& subsampled, int pixelsToSample)
 {
     size_t N = 3 * width * height;
-    uint16_t x, y;
     // 1 2 3 4 5
     // 6 7 8 9 10
     //     x y

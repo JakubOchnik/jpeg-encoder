@@ -4,6 +4,7 @@ void Subsampler::chromaSubsample(ImgMatrix<unsigned char>& img)
 {
     // 4:1:1 implementation
     // TODO: 4:2:0 (most popular) and 4:2:2
+    //SubMatrix susasdadas()
     std::vector<unsigned char> subsampled(img.size()/2);
 
     if(img.getWidth() % 4 != 0)

@@ -39,73 +39,67 @@ public:
 };
 
 template<typename T>
-inline ImgMatrix<T>::ImgMatrix(T* data, uint16_t w, uint16_t h, uint8_t ch, bool copy): BaseMatrix<T>(w,h,ch)
+inline ImgMatrix<T>::ImgMatrix(T* data, uint16_t w, uint16_t h, uint8_t ch, bool copy): BaseMatrix<T>(w, h, ch, copy)
 {
-    f_width = width * channels;
-    f_height = height;
-    length = width * height * channels;
     if(copy)
     {
-        raw_data = new T[length];
-        memcpy(raw_data, data, length * sizeof(T));
-        memoryManaged = true;
+        this->raw_data = new T[this->length];
+        memcpy(this->raw_data, data, this->length * sizeof(T));
+        this->memoryManaged = true;
     }
     else
     {
-        raw_data = data;
-        memoryManaged = false;
+        this->raw_data = data;
+        this->memoryManaged = false;
     }
 }
 
 template<typename T>
 inline ImgMatrix<T>::ImgMatrix(): BaseMatrix<T>()
 {
-    f_width = f_height = height = width = length = channels = 0;
-    raw_data = nullptr;
-    memoryManaged = false;
 }
 
 
 template<typename T>
 inline T& ImgMatrix<T>::operator()(size_t index)
 {
-    if(index > length - 1)
+    if(index > this->length - 1)
     {
         throw std::runtime_error("Array index too large");
     }
-    return raw_data[index];
+    return this->raw_data[index];
 }
 
 template<typename T>
 inline T& ImgMatrix<T>::operator()(size_t x, size_t y)
 {
-    if(x > f_width - 1 || y > height - 1)
+    if(x > this->f_width - 1 || y > this->height - 1)
     {
         throw std::runtime_error("Index out of bounds");
     }
 
-    size_t idx = x + y * f_width;
-    return raw_data[idx];
+    size_t idx = x + y * this->f_width;
+    return this->raw_data[idx];
 }
 
 template<typename T>
 inline T& ImgMatrix<T>::operator[](size_t index)
 {
-    if(index > length - 1)
+    if(index > this->length - 1)
     {
         throw std::runtime_error("Array index too large");
     }
-    return raw_data[index];
+    return this->raw_data[index];
 }
 
 template<typename T>
 inline T& ImgMatrix<T>::operator()(size_t x, size_t y, uint8_t ch)
 {
-    if(x > width - 1 || y > height - 1)
+    if(x > this->width - 1 || y > this->height - 1)
     {
         throw std::runtime_error("Index out of bounds");
     }
-    if(ch > channels)
+    if(ch > this->channels)
     {
         throw std::runtime_error("Channel number out of range");
     }
@@ -115,17 +109,17 @@ inline T& ImgMatrix<T>::operator()(size_t x, size_t y, uint8_t ch)
 template<typename T>
 inline const std::vector<std::reference_wrapper<T>> ImgMatrix<T>::getPixel(size_t x, size_t y)
 {
-    if(x > width - 1 || y > height - 1)
+    if(x > this->width - 1 || y > this->height - 1)
     {
         throw std::runtime_error("Index out of bounds");
     }
     // Returns a vector of REFERENCES to each particular channel
     // R, G, B; Y, Cb, Cr; etc.
-    size_t base_idx = (x + y * width) * channels;
+    size_t base_idx = (x + y * this->width) * this->channels;
     std::vector<std::reference_wrapper<T>> refs;
-    for(int i{0}; i<channels; ++i)
+    for(int i{0}; i < this->channels; ++i)
     {
-        refs.emplace_back(raw_data[base_idx + i]);
+        refs.emplace_back(this->raw_data[base_idx + i]);
     }
     return refs;
 }
@@ -135,14 +129,14 @@ inline T& ImgMatrix<T>::getPixelCh(size_t x, size_t y, uint8_t ch)
 {
     // Returns a vector of REFERENCES to each particular channel
     // R, G, B; Y, Cb, Cr; etc.
-    size_t base_idx = (x + y * width) * channels;
-    return raw_data[base_idx + ch];
+    size_t base_idx = (x + y * this->width) * this->channels;
+    return this->raw_data[base_idx + ch];
 }
 
 template<typename T>
 inline void ImgMatrix<T>::duplicateLastRow(int n)
 {
-    size_t new_length = length + f_width * n;
+    size_t new_length = this->length + this->f_width * n;
     T* raw_new = nullptr;
     try
     {
@@ -154,30 +148,30 @@ inline void ImgMatrix<T>::duplicateLastRow(int n)
     }
 
     // copy existing array
-    memcpy(raw_new,raw_data,length*sizeof(T));
+    memcpy(raw_new, this->raw_data, this->length*sizeof(T));
     // copy last row
-    size_t idx = 0 + f_width * (height - 1);
-    size_t dst_idx = length;
+    size_t idx = 0 + this->f_width * (this->height - 1);
+    size_t dst_idx = this->length;
     for(int i{0}; i<n; ++i)
     {
-        memcpy(&raw_new[dst_idx], &raw_data[idx], f_width * sizeof(T));
-        dst_idx += f_width;
+        memcpy(&raw_new[dst_idx], &this->raw_data[idx], this->f_width * sizeof(T));
+        dst_idx += this->f_width;
     }
     
     // Assume, that current data is allocated on the heap.
-    if(memoryManaged)
-        delete [] raw_data;
+    if(this->memoryManaged)
+        delete [] this->raw_data;
 
-    memoryManaged = true;
-    raw_data = raw_new;
-    height += n;
-    length += n * f_width;
+    this->memoryManaged = true;
+    this->raw_data = raw_new;
+    this->height += n;
+    this->length += n * this->f_width;
 }
 
 template<typename T>
 inline void ImgMatrix<T>::duplicateLastColumn(int n)
 {
-    size_t new_length = length + n * height * channels;
+    size_t new_length = this->length + n * this->height * this->channels;
     T* raw_new = nullptr;
     try
     {
@@ -189,44 +183,41 @@ inline void ImgMatrix<T>::duplicateLastColumn(int n)
     }
     size_t src_idx = 0;
     size_t dst_idx = 0;
-    for(int y{0}; y < height; ++y)
+    for(int y{0}; y < this->height; ++y)
     {
         // Append existing row
-        memcpy(&raw_new[dst_idx], &raw_data[src_idx], f_width * sizeof(T));
-        dst_idx += f_width;
-        src_idx += f_width;
+        memcpy(&raw_new[dst_idx], &this->raw_data[src_idx], this->f_width * sizeof(T));
+        dst_idx += this->f_width;
+        src_idx += this->f_width;
         // Append columns
         for(int i{0}; i < n; ++i)
         {
-            memcpy(&raw_new[dst_idx], &raw_data[src_idx - channels], channels * sizeof(T));
-            dst_idx += channels;
+            memcpy(&raw_new[dst_idx], &this->raw_data[src_idx - this->channels], this->channels * sizeof(T));
+            dst_idx += this->channels;
         }
     }
 
         // Assume, that current data is allocated on the heap.
-    if(memoryManaged)
-        delete [] raw_data;
+    if(this->memoryManaged)
+        delete [] this->raw_data;
 
-    memoryManaged = true;
-    raw_data = raw_new;
-    width += n;
-    f_width += n * channels;
-    length += n * height * channels;
+    this->memoryManaged = true;
+    this->raw_data = raw_new;
+    this->width += n;
+    this->f_width += n * this->channels;
+    this->length += n * this->height * this->channels;
 }
 
 template<typename T>
 inline void ImgMatrix<T>::printMatrix()
 {
-    for(int i{0}; i<height; ++i)
+    for(int i{0}; i < this->height; ++i)
     {
-        for(int j{0}; j<f_width; ++j)
+        for(int j{0}; j < this->f_width; ++j)
         {
             if(j > 0 && j%3==0)
                 std::cout << "|";
-            //std::cout << static_cast<int>((*this)(j,i)) << " ";
-            getChannels();
-            operator[](0);
-            //operator()(j,i);
+            std::cout << static_cast<int>((*this)(j,i)) << " ";
         }
         std::cout << "\n";
     }
@@ -236,6 +227,6 @@ inline void ImgMatrix<T>::printMatrix()
 template<typename T>
 inline ImgMatrix<T>::~ImgMatrix()
 {
-    if(memoryManaged)
-        delete [] raw_data;
+    if(this->memoryManaged)
+        delete [] this->raw_data;
 }

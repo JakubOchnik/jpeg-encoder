@@ -28,7 +28,7 @@ protected:
     bool memoryManaged;
 public:
 
-    BaseMatrix(uint16_t w, uint16_t h, uint8_t ch);
+    BaseMatrix(uint16_t w, uint16_t h, uint8_t ch, bool mem);
     BaseMatrix();
 
     // Pixel imensions of an image
@@ -48,12 +48,15 @@ public:
 };
 
 template<typename T>
-BaseMatrix<T>::BaseMatrix(uint16_t w, uint16_t h, uint8_t ch): width(w), height(h), channels(ch)
+inline BaseMatrix<T>::BaseMatrix(uint16_t w, uint16_t h, uint8_t ch, bool mem): width(w), height(h), channels(ch), memoryManaged(mem)
 {
+    f_width = width * channels;
+    f_height = height;
+    length = f_width * height;
 }
 
 template<typename T>
-BaseMatrix<T>::BaseMatrix()
+inline BaseMatrix<T>::BaseMatrix()
 {
     f_width = f_height = height = width = length = channels = 0;
     raw_data = nullptr;

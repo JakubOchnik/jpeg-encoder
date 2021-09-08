@@ -1,5 +1,6 @@
 #include <cmath>
 #include <imgMatrix.hpp>
+#include <subsampMatrix.hpp>
 
 class Subsampler 
 {
