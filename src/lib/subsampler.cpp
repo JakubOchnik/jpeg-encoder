@@ -1,6 +1,6 @@
 #include <subsampler.hpp>
 
-void Subsampler::chromaSubsample(Matrix<unsigned char>& img)
+void Subsampler::chromaSubsample(ImgMatrix<unsigned char>& img)
 {
     // 4:1:1 implementation
     // TODO: 4:2:0 (most popular) and 4:2:2

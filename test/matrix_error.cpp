@@ -1,4 +1,4 @@
-#include <lib/matrix.hpp>
+#include <lib/imgMatrix.hpp>
 #include <smartAssert.hpp>
 #include <functional>
 #include <vector>
@@ -7,7 +7,7 @@
 int main()
 {
     char arr[] = {1,2,3,4,5,6,7,8,9,10,11,12};
-    Matrix mat = Matrix<char>(arr, 2, 2, 3);
+    ImgMatrix mat = ImgMatrix<char>(arr, 2, 2, 3);
 
     // Getters:
     // T& operator[](size_t index)

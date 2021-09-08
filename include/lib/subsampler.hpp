@@ -1,7 +1,7 @@
 #include <cmath>
-#include <matrix.hpp>
+#include <imgMatrix.hpp>
 
 class Subsampler 
 {
-    static void chromaSubsample(Matrix<unsigned char>& img);
+    static void chromaSubsample(ImgMatrix<unsigned char>& img);
 };

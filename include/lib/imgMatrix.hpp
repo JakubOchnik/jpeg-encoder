@@ -6,91 +6,40 @@
 #include <functional>
 #include <iostream>
 #include <cstring>
+#include <lib/baseMatrix.hpp>
 
 template<typename T>
-class Matrix
+class ImgMatrix : public BaseMatrix<T>
 {
-    T* raw_data;
-
-    // Pixel dimensions
-    uint16_t width;
-    uint16_t height;
-    // Real dimensions (f_height = height, f_width = width*channels)
-    uint16_t f_width;
-    uint16_t f_height;
-    // Number of channels in an image (usually 3)
-    uint8_t channels;
-    // Real length of data in the array
-    size_t length;
-    // Flag which indicates whether a raw_data array
-    // is memory managed within the class.
-    bool memoryManaged;
 public:
 
-    Matrix(T* data, uint16_t w, uint16_t h, uint8_t ch, bool copy = false);
-    Matrix();
-    ~Matrix();
-
-    // Pixel imensions of an image
-    uint16_t getWidth() const;
-    uint16_t getHeight() const;
-    // F_width is a 'real' width of matrix (multiplied by number of channels)
-    uint16_t getF_width() const;
-    uint16_t getF_height() const;
-    uint8_t getChannels() const;
+    ImgMatrix(T* data, uint16_t w, uint16_t h, uint8_t ch, bool copy = false);
+    ImgMatrix();
+    ~ImgMatrix();
 
     // Raw, "flat" data index operators
-    T& operator[](size_t index);
-    T& operator()(size_t index);
+    virtual T& operator[](size_t index);
+    virtual T& operator()(size_t index);
     // Raw, 2D operator (x is counted with channels, y is the same as pixel height)
-    T& operator()(size_t x, size_t y);
+    virtual T& operator()(size_t x, size_t y);
+
     // Pixel index operator with channel selector (range: 0-channels)
     T& operator()(size_t x, size_t y, uint8_t ch);
+
     // This function returns a vector of REFERENCES to components of pixel
     const std::vector<std::reference_wrapper<T>> getPixel(size_t x, size_t y);
     T& getPixelCh(size_t x, size_t y, uint8_t ch);
-    // Real size getter
-    size_t size() const;
+
     // Prints a matrix (cout)
-    void printMatrix();
+    void printMatrix() override;
     // Functions which append a duplicate of last row/column n times
     void duplicateLastRow(int n = 1);
     void duplicateLastColumn(int n = 1);
 
 };
 
-
 template<typename T>
-inline uint16_t Matrix<T>::getWidth() const
-{
-    return width;
-}
-
-template<typename T>
-inline uint16_t Matrix<T>::getHeight() const
-{
-    return height;
-}
-
-template<typename T>
-inline uint16_t Matrix<T>::getF_width() const
-{
-    return f_width;
-}
-template<typename T>
-inline uint16_t Matrix<T>::getF_height() const
-{
-    return f_height;
-}
-
-template<typename T>
-inline uint8_t Matrix<T>::getChannels() const
-{
-    return channels;
-}
-
-template<typename T>
-inline Matrix<T>::Matrix(T* data, uint16_t w, uint16_t h, uint8_t ch, bool copy): width(w), height(h), channels(ch)
+inline ImgMatrix<T>::ImgMatrix(T* data, uint16_t w, uint16_t h, uint8_t ch, bool copy): BaseMatrix<T>(w,h,ch)
 {
     f_width = width * channels;
     f_height = height;
@@ -107,16 +56,18 @@ inline Matrix<T>::Matrix(T* data, uint16_t w, uint16_t h, uint8_t ch, bool copy)
         memoryManaged = false;
     }
 }
+
 template<typename T>
-inline Matrix<T>::Matrix()
+inline ImgMatrix<T>::ImgMatrix(): BaseMatrix<T>()
 {
     f_width = f_height = height = width = length = channels = 0;
     raw_data = nullptr;
     memoryManaged = false;
 }
 
+
 template<typename T>
-inline T& Matrix<T>::operator()(size_t index)
+inline T& ImgMatrix<T>::operator()(size_t index)
 {
     if(index > length - 1)
     {
@@ -126,7 +77,7 @@ inline T& Matrix<T>::operator()(size_t index)
 }
 
 template<typename T>
-inline T& Matrix<T>::operator()(size_t x, size_t y)
+inline T& ImgMatrix<T>::operator()(size_t x, size_t y)
 {
     if(x > f_width - 1 || y > height - 1)
     {
@@ -138,7 +89,17 @@ inline T& Matrix<T>::operator()(size_t x, size_t y)
 }
 
 template<typename T>
-inline T& Matrix<T>::operator()(size_t x, size_t y, uint8_t ch)
+inline T& ImgMatrix<T>::operator[](size_t index)
+{
+    if(index > length - 1)
+    {
+        throw std::runtime_error("Array index too large");
+    }
+    return raw_data[index];
+}
+
+template<typename T>
+inline T& ImgMatrix<T>::operator()(size_t x, size_t y, uint8_t ch)
 {
     if(x > width - 1 || y > height - 1)
     {
@@ -152,17 +113,7 @@ inline T& Matrix<T>::operator()(size_t x, size_t y, uint8_t ch)
 }
 
 template<typename T>
-inline T& Matrix<T>::operator[](size_t index)
-{
-    if(index > length - 1)
-    {
-        throw std::runtime_error("Array index too large");
-    }
-    return raw_data[index];
-}
-
-template<typename T>
-inline const std::vector<std::reference_wrapper<T>> Matrix<T>::getPixel(size_t x, size_t y)
+inline const std::vector<std::reference_wrapper<T>> ImgMatrix<T>::getPixel(size_t x, size_t y)
 {
     if(x > width - 1 || y > height - 1)
     {
@@ -180,13 +131,7 @@ inline const std::vector<std::reference_wrapper<T>> Matrix<T>::getPixel(size_t x
 }
 
 template<typename T>
-inline size_t Matrix<T>::size() const
-{
-    return length;
-}
-
-template<typename T>
-inline T& Matrix<T>::getPixelCh(size_t x, size_t y, uint8_t ch)
+inline T& ImgMatrix<T>::getPixelCh(size_t x, size_t y, uint8_t ch)
 {
     // Returns a vector of REFERENCES to each particular channel
     // R, G, B; Y, Cb, Cr; etc.
@@ -195,7 +140,7 @@ inline T& Matrix<T>::getPixelCh(size_t x, size_t y, uint8_t ch)
 }
 
 template<typename T>
-inline void Matrix<T>::duplicateLastRow(int n)
+inline void ImgMatrix<T>::duplicateLastRow(int n)
 {
     size_t new_length = length + f_width * n;
     T* raw_new = nullptr;
@@ -203,7 +148,7 @@ inline void Matrix<T>::duplicateLastRow(int n)
     {
         raw_new = new T[new_length];
     }
-    catch(const std::bad_alloc& e)
+    catch(...)
     {
         throw;
     }
@@ -230,7 +175,7 @@ inline void Matrix<T>::duplicateLastRow(int n)
 }
 
 template<typename T>
-inline void Matrix<T>::duplicateLastColumn(int n)
+inline void ImgMatrix<T>::duplicateLastColumn(int n)
 {
     size_t new_length = length + n * height * channels;
     T* raw_new = nullptr;
@@ -238,7 +183,7 @@ inline void Matrix<T>::duplicateLastColumn(int n)
     {
         raw_new = new T[new_length];
     }
-    catch(const std::bad_alloc& e)
+    catch(...)
     {
         throw;
     }
@@ -270,7 +215,7 @@ inline void Matrix<T>::duplicateLastColumn(int n)
 }
 
 template<typename T>
-inline void Matrix<T>::printMatrix()
+inline void ImgMatrix<T>::printMatrix()
 {
     for(int i{0}; i<height; ++i)
     {
@@ -278,7 +223,10 @@ inline void Matrix<T>::printMatrix()
         {
             if(j > 0 && j%3==0)
                 std::cout << "|";
-            std::cout << static_cast<int>((*this)(j,i)) << " ";
+            //std::cout << static_cast<int>((*this)(j,i)) << " ";
+            getChannels();
+            operator[](0);
+            //operator()(j,i);
         }
         std::cout << "\n";
     }
@@ -286,7 +234,7 @@ inline void Matrix<T>::printMatrix()
 }
 
 template<typename T>
-Matrix<T>::~Matrix()
+inline ImgMatrix<T>::~ImgMatrix()
 {
     if(memoryManaged)
         delete [] raw_data;

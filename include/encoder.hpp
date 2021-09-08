@@ -1,12 +1,12 @@
 #include <iostream>
 #include <opencv2/opencv.hpp>
 #include <utils.hpp>
-#include <lib/matrix.hpp>
+#include <lib/imgMatrix.hpp>
 #include <lib/subsampler.hpp>
 
 class Encoder
 {
-    Matrix<unsigned char> image;
+    ImgMatrix<unsigned char> image;
     unsigned char* raw_img;
     int width;
     int height;

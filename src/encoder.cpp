@@ -2,7 +2,7 @@
 
 Encoder::Encoder(unsigned char* img, int w, int h): raw_img(img), width(w), height(h)
 {
-    image = Matrix(img, w, h, 3, true);
+    image = ImgMatrix(img, w, h, 3, true);
 }
 
 void Encoder::chromaSubsample(std::vector<uint8_t>& subsampled, int pixelsToSample)

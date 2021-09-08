@@ -1,7 +1,7 @@
-#include <lib/matrix.hpp>
+#include <lib/imgMatrix.hpp>
 #include <smartAssert.hpp>
 
-bool verifyNewRow(Matrix<char>& mat, int y)
+bool verifyNewRow(ImgMatrix<char>& mat, int y)
 {
     for(int x{0}; x < 6; ++x)
     {
@@ -13,7 +13,7 @@ bool verifyNewRow(Matrix<char>& mat, int y)
     return true;
 }
 
-bool verifyTripleNewRow(Matrix<char>& mat, int y)
+bool verifyTripleNewRow(ImgMatrix<char>& mat, int y)
 {
     // y = 6
     for(int x{0}; x < 6; ++x)
@@ -26,7 +26,7 @@ bool verifyTripleNewRow(Matrix<char>& mat, int y)
     return true;
 }
 
-bool verifyNewColumn(Matrix<char>& mat, int x)
+bool verifyNewColumn(ImgMatrix<char>& mat, int x)
 {
     for(int y{0}; y < mat.getHeight(); ++y)
     {
@@ -41,7 +41,7 @@ bool verifyNewColumn(Matrix<char>& mat, int x)
     return true;
 }
 
-bool verifyDoubleColumn(Matrix<char>& mat, int x)
+bool verifyDoubleColumn(ImgMatrix<char>& mat, int x)
 {
     auto ch = mat.getChannels();
     auto h = mat.getHeight();
@@ -62,7 +62,7 @@ int main()
 {
     // duplicateLastRow
     char arr[] = {1,2,3,4,5,6,7,8,9,10,11,12};
-    Matrix mat = Matrix<char>(arr, 2, 2, 3);
+    ImgMatrix mat = ImgMatrix<char>(arr, 2, 2, 3);
     mat.duplicateLastRow();
     M_Assert(mat.getHeight() == 3, "duplicateLastRow (1: single): Incorrect height");
     M_Assert(mat.size() == 18, "duplicateLastRow (1: single): Incorrect size");
@@ -76,7 +76,7 @@ int main()
     M_Assert(mat.size() == 42, "duplicateLastRow (3: triple): Incorrect size");
     M_Assert(verifyTripleNewRow(mat, 6), "duplicateLastRow (3: triple): Some row is incorrect");
     // duplicateLastColumn
-    Matrix mat2 = Matrix<char>(arr, 2, 2, 3);
+    ImgMatrix mat2 = ImgMatrix<char>(arr, 2, 2, 3);
     mat2.duplicateLastColumn();
     M_Assert(mat2.getWidth() == 3, "duplicateLastColumn (1: single): Incorrect width");
     M_Assert(mat2.getF_width() == 9, "duplicateLastColumn (1: single): Incorrect full width");
@@ -93,7 +93,7 @@ int main()
     M_Assert(mat2.size() == 36, "duplicateLastColumn (3: double): Incorrect size");
     M_Assert(verifyDoubleColumn(mat2, 12), "duplicateLastColumn (3: double): Some column is incorrect");
     // Combination of two
-    Matrix mat3 = Matrix<char>(arr, 2, 2, 3);
+    ImgMatrix mat3 = ImgMatrix<char>(arr, 2, 2, 3);
     mat3.duplicateLastRow(3);
     mat3.duplicateLastColumn(2);
     M_Assert(mat3.getHeight() == 5, "Combination (2 x col, 3 x row): Incorrect height");
