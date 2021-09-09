@@ -7,6 +7,7 @@
 #include <iostream>
 #include <cstring>
 #include <tuple>
+#include <cmath>
 #include <lib/baseMatrix.hpp>
 #include <lib/imgMatrix.hpp>
 #include <consts/consts.hpp>
