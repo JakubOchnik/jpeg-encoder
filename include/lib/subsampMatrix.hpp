@@ -1,4 +1,3 @@
-/*
 #pragma once
 #include <cstdint>
 #include <exception>
@@ -7,20 +6,40 @@
 #include <functional>
 #include <iostream>
 #include <cstring>
+#include <tuple>
 #include <lib/baseMatrix.hpp>
 #include <lib/imgMatrix.hpp>
 #include <consts/consts.hpp>
 
 template<typename T>
+using ref_wrap = std::reference_wrapper<T>;
+
+template<typename T>
 class SubMatrix : public BaseMatrix<T>
 {
+    // Pixel dimensions
+    uint16_t orig_width;
+    uint16_t orig_height;
+
+    SubsamplingType type;
+    uint8_t gs_x;
+    uint8_t gs_y;
+
 
 public:
 
-    SubMatrix(T* data, uint16_t w, uint16_t h, uint8_t ch, bool copy = false);
-    SubMatrix(const BaseMatrix<T>&);
+    SubMatrix(const BaseMatrix<T>&, SubsamplingType);
     SubMatrix();
     ~SubMatrix();
+
+    SubMatrix(const SubMatrix<T>& other);
+
+    // Getters
+    uint8_t getGsX() const;
+    uint8_t getGsY() const;
+    SubsamplingType getType() const;
+    uint16_t getOrigWidth() const;
+    uint16_t getOrigHeight() const;
 
     // Raw, "flat" data index operators
     virtual T& operator[](size_t index);
@@ -32,8 +51,8 @@ public:
     T& operator()(size_t x, size_t y, uint8_t ch);
 
     // This function returns a vector of REFERENCES to components of pixel
-    const std::vector<std::reference_wrapper<T>> getPixel(size_t x, size_t y);
-    T& getPixelCh(size_t x, size_t y, uint8_t ch);
+    const std::tuple<std::vector<ref_wrap<T>>, ref_wrap<T>, ref_wrap<T>> getPixel(size_t x, size_t y);
+    T& getPixelComponent(size_t x, size_t y, uint8_t comp);
 
     // Prints a matrix (cout)
     void printMatrix() override;
@@ -41,119 +60,149 @@ public:
 };
 
 template<typename T>
-inline SubMatrix<T>::SubMatrix(T* data, uint16_t w, uint16_t h, uint8_t ch, bool copy): BaseMatrix<T>(w,h,ch)
-{
-    if(copy)
-    {
-        raw_data = new T[length];
-        memcpy(this->raw_data, data, this->length * sizeof(T));
-        this->memoryManaged = true;
-    }
-    else
-    {
-        this->raw_data = data;
-        this->memoryManaged = false;
-    }
-}
-
-template<typename T>
 inline SubMatrix<T>::SubMatrix(): BaseMatrix<T>()
 {
 }
 
 template<typename T>
-inline SubMatrix<T>::SubMatrix(const BaseMatrix<T>& img): BaseMatrix<T>(img.getWidth(), img.getHeight(), img.getChannels())
+inline SubMatrix<T>::SubMatrix(const BaseMatrix<T>& img, SubsamplingType type): BaseMatrix<T>(img.getWidth(), img.getHeight(), img.getChannels(), true)
 {
-    // Assume it's an image
-
+    this->type = type;
+    if(type == SubsamplingType::s411)
+    {
+        this->gs_x = 4;
+        this->gs_y = 1;
+        this->orig_height = img.getHeight();
+        this->orig_width = img.getWidth();
+        this->width = ceil(this->orig_width / 4);
+        this->length = ceil(this->width * this->height * (gs_x + 2));
+        this->f_width = ceil(this->width * (gs_x + 2));
+        this->raw_data = new T[this->length];
+        this->memoryManaged = true;
+    }
 }
+
+template<typename T>
+inline SubMatrix<T>::SubMatrix(const SubMatrix<T>& other)
+{
+    this->orig_height = other.getOrigHeight();
+    this->orig_width = other.getOrigWidth();
+    this->width = other.getWidth();
+    this->height = other.getHeight();
+    this->length = other.size();
+    this->f_width = other.getF_width();
+    this->f_height = other.getF_height();
+    this->channels = other.channels;
+    this->gs_x = other.getGsX();
+    this->gs_y = other.getGsY();
+    this->type = other.getType();
+
+    this->raw_data = new T[this->length];
+    // explicitly copy data
+    memcpy(this->raw_data, other.getRawPointer(), this->length*sizeof(T));
+    this->memoryManaged = true;
+}
+
 
 template<typename T>
 inline T& SubMatrix<T>::operator()(size_t index)
 {
-    if(index > length - 1)
+    if(index > this->length - 1)
     {
         throw std::runtime_error("Array index too large");
     }
-    return raw_data[index];
+    return this->raw_data[index];
 }
 
 template<typename T>
 inline T& SubMatrix<T>::operator()(size_t x, size_t y)
 {
-    if(x > f_width - 1 || y > height - 1)
+    if(x > this->f_width - 1 || y > this->height - 1)
     {
         throw std::runtime_error("Index out of bounds");
     }
 
-    size_t idx = x + y * f_width;
-    return raw_data[idx];
+    size_t idx = x + y * this->f_width;
+    return this->raw_data[idx];
 }
 
 template<typename T>
 inline T& SubMatrix<T>::operator[](size_t index)
 {
-    if(index > length - 1)
+    if(index > this->length - 1)
     {
         throw std::runtime_error("Array index too large");
     }
-    return raw_data[index];
+    return this->raw_data[index];
 }
 
 template<typename T>
-inline T& SubMatrix<T>::operator()(size_t x, size_t y, uint8_t ch)
+inline T& SubMatrix<T>::operator()(size_t x, size_t y, uint8_t comp)
 {
-    if(x > width - 1 || y > height - 1)
+    if(x > this->width - 1 || y > this->height - 1)
     {
         throw std::runtime_error("Index out of bounds");
     }
-    if(ch > channels)
-    {
-        throw std::runtime_error("Channel number out of range");
+    // TODO: CONSIDER 422 AND 420
+    if(this->type == SubsamplingType::s411)
+    {   
+        // Pixel_length = number of Y components (group pixels) + Cb + Cr
+        if(comp > this->gs_x + 2 - 1) 
+        {
+            throw std::runtime_error("Channel number out of range");
+        }
     }
-    return getPixelCh(x,y,ch);
+    return getPixelComponent(x,y,comp);
 }
 
 template<typename T>
-inline const std::vector<std::reference_wrapper<T>> SubMatrix<T>::getPixel(size_t x, size_t y)
+inline T& SubMatrix<T>::getPixelComponent(size_t x, size_t y, uint8_t comp)
 {
-    if(x > width - 1 || y > height - 1)
+    // Returns a vector of REFERENCES to each particular component
+    // R, G, B; Y, Cb, Cr; etc.
+    // TODO: CONSIDER 422 AND 420
+    if(this->type == SubsamplingType::s411)
+    {
+        size_t base_idx = (x + y * this->width) * (this->gs_x + 2);
+        return this->raw_data[base_idx + comp];
+    }
+}
+
+template<typename T>
+inline const std::tuple<std::vector<ref_wrap<T>>, ref_wrap<T>, ref_wrap<T>> SubMatrix<T>::getPixel(size_t x, size_t y)
+{
+    if(x > this->width - 1 || y > this->height - 1)
     {
         throw std::runtime_error("Index out of bounds");
     }
-    // Returns a vector of REFERENCES to each particular channel
-    // R, G, B; Y, Cb, Cr; etc.
-    size_t base_idx = (x + y * width) * channels;
-    std::vector<std::reference_wrapper<T>> refs;
-    for(int i{0}; i<channels; ++i)
+    // Returns a vector of REFERENCES to Y channels and references to Cb and Cr
+    std::vector<ref_wrap<T>> y_refs;
+    if(this->type == SubsamplingType::s411)
     {
-        refs.emplace_back(raw_data[base_idx + i]);
+        size_t base_idx = (x + y * this->width) * (this->gs_x + 2);
+        for(int i{0}; i < this->gs_x; ++i)
+        {
+            y_refs.emplace_back(this->raw_data[base_idx + i]);
+        }
+        const auto Cb = ref_wrap<T>(this->raw_data[base_idx + this->gs_x]);
+        const auto Cr = ref_wrap<T>(this->raw_data[base_idx + this->gs_x + 1]);
+        return std::tuple(y_refs, Cb, Cr);
     }
-    return refs;
-}
-
-template<typename T>
-inline T& SubMatrix<T>::getPixelCh(size_t x, size_t y, uint8_t ch)
-{
-    // Returns a vector of REFERENCES to each particular channel
-    // R, G, B; Y, Cb, Cr; etc.
-    size_t base_idx = (x + y * width) * channels;
-    return raw_data[base_idx + ch];
+    throw std::runtime_error("Something went wrong. Dirty workaround, will fix in the future.");
+    return std::tuple(y_refs, ref_wrap<T>(this->raw_data[0]), ref_wrap<T>(this->raw_data[0]));
 }
 
 template<typename T>
 inline void SubMatrix<T>::printMatrix()
 {
-    for(int i{0}; i<height; ++i)
+    // WARNING: works only with 411
+    for(int i{0}; i < this->height; ++i)
     {
-        for(int j{0}; j<f_width; ++j)
+        for(int j{0}; j < this->f_width; ++j)
         {
-            if(j > 0 && j%3==0)
+            if(j > 0 && j%6==0)
                 std::cout << "|";
-            //std::cout << static_cast<int>((*this)(j,i)) << " ";
-            getChannels();
-            operator[](0);
-            //operator()(j,i);
+            std::cout << static_cast<int>((*this)(j,i)) << " ";
         }
         std::cout << "\n";
     }
@@ -163,7 +212,36 @@ inline void SubMatrix<T>::printMatrix()
 template<typename T>
 inline SubMatrix<T>::~SubMatrix()
 {
-    if(memoryManaged)
-        delete [] raw_data;
+    if(this->memoryManaged)
+        delete [] this->raw_data;
 }
-*/
+
+template<typename T>
+uint8_t SubMatrix<T>::getGsX() const
+{
+    return this->gs_x;
+}
+
+template<typename T>
+uint8_t SubMatrix<T>::getGsY() const
+{
+    return this->gs_y;
+}
+
+template<typename T>
+SubsamplingType SubMatrix<T>::getType() const
+{
+    return this->type;
+}
+
+template<typename T>
+uint16_t SubMatrix<T>::getOrigWidth() const
+{
+    return this->orig_width;
+}
+
+template<typename T>
+uint16_t SubMatrix<T>::getOrigHeight() const
+{
+    return this->orig_height;
+}

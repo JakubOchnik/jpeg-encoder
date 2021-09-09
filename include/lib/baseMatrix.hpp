@@ -38,6 +38,7 @@ public:
     uint16_t getF_width() const;
     uint16_t getF_height() const;
     uint8_t getChannels() const;
+    T* getRawPointer() const;
 
     // Real size getter
     size_t size() const;
@@ -53,6 +54,7 @@ inline BaseMatrix<T>::BaseMatrix(uint16_t w, uint16_t h, uint8_t ch, bool mem): 
     f_width = width * channels;
     f_height = height;
     length = f_width * height;
+    raw_data = nullptr;
 }
 
 template<typename T>
@@ -97,6 +99,13 @@ size_t BaseMatrix<T>::size() const
 {
     return length;
 }
+
+template<typename T>
+T* BaseMatrix<T>::getRawPointer() const
+{
+    return raw_data;
+}
+
 
 template<typename T>
 inline void BaseMatrix<T>::printMatrix()
