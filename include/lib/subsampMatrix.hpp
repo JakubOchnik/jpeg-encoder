@@ -51,8 +51,10 @@ public:
     // Pixel index operator with channel selector (range: 0-channels)
     T& operator()(size_t x, size_t y, uint8_t ch);
 
-    // This function returns a vector of REFERENCES to components of pixel
-    const std::tuple<std::vector<ref_wrap<T>>, ref_wrap<T>, ref_wrap<T>> getPixel(size_t x, size_t y);
+    // This function returns a vector of REFERENCES to components of a pixel group
+    const std::tuple<std::vector<ref_wrap<T>>, ref_wrap<T>, ref_wrap<T>> getGroup(size_t x, size_t y);
+    // This function returns a vector of REFERENCES to Y, Cb, Cr channels of a REAL pixel
+    const std::tuple<ref_wrap<T>, ref_wrap<T>, ref_wrap<T>> getPixel(size_t x, size_t y);
     T& getPixelComponent(size_t x, size_t y, uint8_t comp);
 
     // Prints a matrix (cout)
@@ -170,7 +172,7 @@ inline T& SubMatrix<T>::getPixelComponent(size_t x, size_t y, uint8_t comp)
 }
 
 template<typename T>
-inline const std::tuple<std::vector<ref_wrap<T>>, ref_wrap<T>, ref_wrap<T>> SubMatrix<T>::getPixel(size_t x, size_t y)
+inline const std::tuple<std::vector<ref_wrap<T>>, ref_wrap<T>, ref_wrap<T>> SubMatrix<T>::getGroup(size_t x, size_t y)
 {
     if(x > this->width - 1 || y > this->height - 1)
     {
@@ -191,6 +193,34 @@ inline const std::tuple<std::vector<ref_wrap<T>>, ref_wrap<T>, ref_wrap<T>> SubM
     }
     throw std::runtime_error("Something went wrong. Dirty workaround, will fix in the future.");
     return std::tuple(y_refs, ref_wrap<T>(this->raw_data[0]), ref_wrap<T>(this->raw_data[0]));
+}
+
+template<typename T>
+inline const std::tuple<ref_wrap<T>, ref_wrap<T>, ref_wrap<T>> SubMatrix<T>::getPixel(size_t x, size_t y)
+{
+    if(x > this->orig_width - 1 || y > this->orig_height - 1)
+    {
+        throw std::runtime_error("Coordinate(s) out of bounds");
+    }
+    // TODO: Other modes
+    if(this->type == SubsamplingType::s411)
+    {
+        // At first: localize the proper group
+            /*
+            0  1 2  3       4   5  6  7 
+            (1 4 7 10 7 8) (13 16 19 22 19 20)
+            8  9  10 11        12  13 14 15  
+            (25 28 31 34 31 32) (37 40 43 46 43 44)
+            */
+
+        auto x_idx = static_cast<int>(x / 4);
+        // (x_idx, y)
+        auto offset = x_idx % 4;
+        auto Y = ref_wrap<T>((*this)(x_idx, y, offset));
+        auto Cb = ref_wrap<T>((*this)(x_idx, y, 4));
+        auto Cr = ref_wrap<T>((*this)(x_idx, y, 5));
+        return std::tuple(Y, Cb, Cr);
+    }
 }
 
 template<typename T>

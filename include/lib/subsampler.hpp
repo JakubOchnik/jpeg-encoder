@@ -1,8 +1,9 @@
 #include <cmath>
 #include <imgMatrix.hpp>
 #include <subsampMatrix.hpp>
+#include <consts/consts.hpp>
 
 class Subsampler 
 {
-    static void chromaSubsample(ImgMatrix<unsigned char>& img);
+    static SubMatrix<unsigned char> chromaSubsample(ImgMatrix<unsigned char>& img);
 };

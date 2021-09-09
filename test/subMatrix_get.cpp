@@ -86,26 +86,46 @@ int main()
         (0 28 31 34 31 32) (37 40 6 46 43 9)
     */
 
-    // const std::vector<T&> getPixel(size_t x, size_t y);
-    auto pixel = subMat.getPixel(0,1);
-    M_Assert(std::tuple_size<decltype(pixel)>::value == 3, "std::vector<T&> getPixel(size_t x, size_t y): returned vector with incorrect size");
-    auto Y = std::get<0>(pixel);
-    auto Cb = std::get<1>(pixel);
-    auto Cr = std::get<2>(pixel);
+    // const std::vector<T&> getGroup(size_t x, size_t y);
+    auto group = subMat.getGroup(0,1);
+    M_Assert(std::tuple_size<decltype(group)>::value == 3, "std::vector<T&> getGroup(size_t x, size_t y): returned vector with incorrect size");
+    auto Y = std::get<0>(group);
+    auto Cb = std::get<1>(group);
+    auto Cr = std::get<2>(group);
     // Test Y
     M_Assert(Y.size() == 4, "std::vector<T&> getPixel(size_t x, size_t y): returned Y vector with incorrect size");
     M_Assert(Y[0] == 0 && Y[1] == 28 && Y[2] == 31 && Y[3] == 34, "std::vector<T&> getPixel(size_t x, size_t y): returned Y vector with an incorrect value");
     Y[1].get() = 10;
     M_Assert(subMat(0,1,1) == 10, "std::vector<T&> getPixel(size_t x, size_t y): Y reference error");
+    /*
+        (1 4 7 10 7 8) (3 16 19 22 19 20)
+        (0 10 31 34 31 32) (37 40 6 46 43 9)
+    */
     // Test Cb
     M_Assert(Cb == 31, "std::vector<T&> getPixel(size_t x, size_t y): returned incorrect Cb value");
     Cb.get() = 255;
     M_Assert(subMat(0,1,4) == 255, "std::vector<T&> getPixel(size_t x, size_t y): Cb reference error");
-
+    /*
+        (1 4 7 10 7 8) (3 16 19 22 19 20)
+        (0 10 31 34 255 32) (37 40 6 46 43 9)
+    */
     // Test Cr
     M_Assert(Cr == 32, "std::vector<T&> getPixel(size_t x, size_t y): returned incorrect Cb value");
     Cr.get() = 0;
     M_Assert(subMat(0,1,5) == 0, "std::vector<T&> getPixel(size_t x, size_t y): Cb reference error");
+    /*
+        (1 4 7 10 7 8) (3 16 19 22 19 20)
+        (0 10 31 34 255 0) (37 40 6 46 43 9)
+    */
+
+    //const std::tuple<ref_wrap<T>, ref_wrap<T>, ref_wrap<T>> getPixel(size_t x, size_t y);
+    auto pixel = subMat.getPixel(6,1);
+    auto Y_p = std::get<0>(pixel);
+    auto Cb_p = std::get<1>(pixel);
+    auto Cr_p = std::get<2>(pixel);
+    M_Assert(Y_p == 6, "std::tuple<ref_wrap<T>, ref_wrap<T>, ref_wrap<T>> getPixel(size_t x, size_t y) : returned incorrect Y value");
+    M_Assert(Cb_p == 43, "std::tuple<ref_wrap<T>, ref_wrap<T>, ref_wrap<T>> getPixel(size_t x, size_t y) : returned incorrect Cb value");
+    M_Assert(Cr_p == 9, "std::tuple<ref_wrap<T>, ref_wrap<T>, ref_wrap<T>> getPixel(size_t x, size_t y) : returned incorrect Cb value");
 
     delete[] arr;
     return 0;

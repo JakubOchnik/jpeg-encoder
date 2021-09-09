@@ -1,10 +1,9 @@
 #include <subsampler.hpp>
 
-void Subsampler::chromaSubsample(ImgMatrix<unsigned char>& img)
+SubMatrix<unsigned char> Subsampler::chromaSubsample(ImgMatrix<unsigned char>& img)
 {
     // 4:1:1 implementation
     // TODO: 4:2:0 (most popular) and 4:2:2
-    //SubMatrix susasdadas()
     std::vector<unsigned char> subsampled(img.size()/2);
 
     if(img.getWidth() % 4 != 0)
@@ -12,6 +11,8 @@ void Subsampler::chromaSubsample(ImgMatrix<unsigned char>& img)
         int padding = img.getWidth() % 4;
         img.duplicateLastColumn(padding);
     }
+    SubMatrix<unsigned char> sub(img, SubsamplingType::s411);
+
     for(int y{0}; y < img.getHeight(); ++y)
     {
         for(int x{0}; x < img.getWidth(); x+=4)
@@ -33,6 +34,6 @@ void Subsampler::chromaSubsample(ImgMatrix<unsigned char>& img)
 
     // TODO: Return it into an interface-like container:
     // something like matrix, but for subsampled image.
-    return;
+    return sub;
 }
 
