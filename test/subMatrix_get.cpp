@@ -118,11 +118,11 @@ int main()
         (0 10 31 34 255 0) (37 40 6 46 43 9)
     */
 
-    //const std::tuple<ref_wrap<T>, ref_wrap<T>, ref_wrap<T>> getPixel(size_t x, size_t y);
+    //const std::vector<ref_wrap<T>> getPixel(size_t x, size_t y);
     auto pixel = subMat.getPixel(6,1);
-    auto Y_p = std::get<0>(pixel);
-    auto Cb_p = std::get<1>(pixel);
-    auto Cr_p = std::get<2>(pixel);
+    auto Y_p = pixel[0];
+    auto Cb_p = pixel[1];
+    auto Cr_p = pixel[2];
     M_Assert(Y_p == 6, "std::tuple<ref_wrap<T>, ref_wrap<T>, ref_wrap<T>> getPixel(size_t x, size_t y) : returned incorrect Y value");
     M_Assert(Cb_p == 43, "std::tuple<ref_wrap<T>, ref_wrap<T>, ref_wrap<T>> getPixel(size_t x, size_t y) : returned incorrect Cb value");
     M_Assert(Cr_p == 9, "std::tuple<ref_wrap<T>, ref_wrap<T>, ref_wrap<T>> getPixel(size_t x, size_t y) : returned incorrect Cb value");

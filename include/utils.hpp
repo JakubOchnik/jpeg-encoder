@@ -2,6 +2,7 @@
 #include <cmath>
 #include <vector>
 #include <iostream>
+#include <lib/subsampMatrix.hpp>
 
 namespace Debug
 {
@@ -20,23 +21,21 @@ namespace Debug
     }
 
     template<typename T>
-    std::vector<uint8_t> subsampled2ycbcr(T arr, int sampledPixels, int N)
+    ImgMatrix<T> subsampled2ycbcr(SubMatrix<T>& src)
     {
-        std::vector<uint8_t> decoded;
-        int step = sampledPixels + 2;
-        int counter = 0;
-        for(int trail{0}; trail < N; trail+=step)
+        ImgMatrix<T> decoded(src.getOrigWidth(), src.getOrigHeight(), src.getChannels());
+
+        for(int y{0}; y < src.getOrigHeight(); ++y)
         {
-            uint8_t cb = arr[trail + sampledPixels];
-            uint8_t cr = arr[trail + sampledPixels + 1];
-            for(int i{0}; i<sampledPixels; ++i)
+            for(int x{0}; x < src.getOrigHeight(); ++x)
             {
-                decoded.push_back(arr[trail + i]);
-                counter++;
-                decoded.push_back(cb);
-                counter++;
-                decoded.push_back(cr);
-                counter++;
+                auto srcPixel = src.getPixel(x, y);
+                auto newPixel = decoded.getPixel(x, y);
+
+                for(int i{0}; i < src.getChannels(); ++i)
+                {
+                    newPixel[i].get() = srcPixel[i];
+                }
             }
         }
         return decoded;

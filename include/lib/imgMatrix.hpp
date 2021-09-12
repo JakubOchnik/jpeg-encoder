@@ -14,6 +14,8 @@ class ImgMatrix : public BaseMatrix<T>
 public:
 
     ImgMatrix(T* data, uint16_t w, uint16_t h, uint8_t ch, bool copy = false);
+    ImgMatrix(uint16_t w, uint16_t h, uint8_t ch);
+    ImgMatrix(const ImgMatrix<T>& other);
     ImgMatrix();
     ~ImgMatrix();
 
@@ -27,7 +29,7 @@ public:
     T& operator()(size_t x, size_t y, uint8_t ch);
 
     // This function returns a vector of REFERENCES to components of pixel
-    const std::vector<std::reference_wrapper<T>> getPixel(size_t x, size_t y);
+    std::vector<std::reference_wrapper<T>> getPixel(size_t x, size_t y);
     T& getPixelCh(size_t x, size_t y, uint8_t ch);
 
     // Prints a matrix (cout)
@@ -52,6 +54,29 @@ inline ImgMatrix<T>::ImgMatrix(T* data, uint16_t w, uint16_t h, uint8_t ch, bool
         this->raw_data = data;
         this->memoryManaged = false;
     }
+}
+
+template<typename T>
+inline ImgMatrix<T>::ImgMatrix(const ImgMatrix<T>& other)
+{
+    this->width = other.getWidth();
+    this->height = other.getHeight();
+    this->f_width = other.getF_width();
+    this->f_height = other.getF_height();
+    this->length = other.size();
+    this->channels = other.getChannels();
+
+    this->raw_data = new T[this->length];
+    // explicitly copy data
+    memcpy(this->raw_data, other.getRawPointer(), this->length*sizeof(T));
+    this->memoryManaged = true;
+}
+
+
+template<typename T>
+inline ImgMatrix<T>::ImgMatrix(uint16_t w, uint16_t h, uint8_t ch): BaseMatrix<T>(w, h, ch, true)
+{
+    this->raw_data = new T[this->length];
 }
 
 template<typename T>
@@ -107,7 +132,7 @@ inline T& ImgMatrix<T>::operator()(size_t x, size_t y, uint8_t ch)
 }
 
 template<typename T>
-inline const std::vector<std::reference_wrapper<T>> ImgMatrix<T>::getPixel(size_t x, size_t y)
+inline std::vector<std::reference_wrapper<T>> ImgMatrix<T>::getPixel(size_t x, size_t y)
 {
     if(x > this->width - 1 || y > this->height - 1)
     {

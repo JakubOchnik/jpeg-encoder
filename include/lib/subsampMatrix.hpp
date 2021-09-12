@@ -26,7 +26,6 @@ class SubMatrix : public BaseMatrix<T>
     uint8_t gs_x;
     uint8_t gs_y;
 
-
 public:
 
     SubMatrix(const BaseMatrix<T>&, SubsamplingType);
@@ -54,7 +53,7 @@ public:
     // This function returns a vector of REFERENCES to components of a pixel group
     const std::tuple<std::vector<ref_wrap<T>>, ref_wrap<T>, ref_wrap<T>> getGroup(size_t x, size_t y);
     // This function returns a vector of REFERENCES to Y, Cb, Cr channels of a REAL pixel
-    const std::tuple<ref_wrap<T>, ref_wrap<T>, ref_wrap<T>> getPixel(size_t x, size_t y);
+    const std::vector<ref_wrap<T>> getPixel(size_t x, size_t y);
     T& getPixelComponent(size_t x, size_t y, uint8_t comp);
 
     // Prints a matrix (cout)
@@ -196,7 +195,7 @@ inline const std::tuple<std::vector<ref_wrap<T>>, ref_wrap<T>, ref_wrap<T>> SubM
 }
 
 template<typename T>
-inline const std::tuple<ref_wrap<T>, ref_wrap<T>, ref_wrap<T>> SubMatrix<T>::getPixel(size_t x, size_t y)
+inline const std::vector<ref_wrap<T>> SubMatrix<T>::getPixel(size_t x, size_t y)
 {
     if(x > this->orig_width - 1 || y > this->orig_height - 1)
     {
@@ -215,11 +214,15 @@ inline const std::tuple<ref_wrap<T>, ref_wrap<T>, ref_wrap<T>> SubMatrix<T>::get
 
         auto x_idx = static_cast<int>(x / 4);
         // (x_idx, y)
-        auto offset = x_idx % 4;
+        // As x_idx is intentionally truncated, calculate the offset using
+        // the original index.
+        auto offset = x % 4;
         auto Y = ref_wrap<T>((*this)(x_idx, y, offset));
         auto Cb = ref_wrap<T>((*this)(x_idx, y, 4));
         auto Cr = ref_wrap<T>((*this)(x_idx, y, 5));
-        return std::tuple(Y, Cb, Cr);
+
+        std::vector<ref_wrap<T>> out = {Y, Cb, Cr};
+        return out;
     }
 }
 

@@ -1,39 +1,39 @@
 #include <subsampler.hpp>
 
-SubMatrix<unsigned char> Subsampler::chromaSubsample(ImgMatrix<unsigned char>& img)
+SubMatrix<unsigned char> Subsampler::chromaSubsample411(ImgMatrix<unsigned char>& img)
 {
-    // 4:1:1 implementation
-    // TODO: 4:2:0 (most popular) and 4:2:2
-    std::vector<unsigned char> subsampled(img.size()/2);
-
     if(img.getWidth() % 4 != 0)
     {
         int padding = img.getWidth() % 4;
         img.duplicateLastColumn(padding);
     }
     SubMatrix<unsigned char> sub(img, SubsamplingType::s411);
-
+    
+    size_t idx = 0;
     for(int y{0}; y < img.getHeight(); ++y)
     {
+        // Move the window 4 pixels to the right (width of each subsampled group)
         for(int x{0}; x < img.getWidth(); x+=4)
         {
             int sum_cb{0};
             int sum_cr{0};
+            // Append each Y component to the subMatrix
+            // and add each Cb and Cr component to the group sum
             for(int i{0}; i<4; ++i)
             {
-                subsampled.push_back(img(x + i,y, 0));
+                sub[idx++] = img(x + i, y, 0);
                 sum_cb += img(x + i, y, 1);
                 sum_cr += img(x + i, y, 2);
             }
-        uint8_t avg_cb = std::round(sum_cb / 4.0f);
-        uint8_t avg_cr = std::round(sum_cr / 4.0f);
-        subsampled.push_back(avg_cb);
-        subsampled.push_back(avg_cr);
+            // Calculate the Cb and Cr average
+            uint8_t avg_cb = std::round(sum_cb / 4.0f);
+            uint8_t avg_cr = std::round(sum_cr / 4.0f);
+            // Append the averages as the 5-th and 6-th component of the group
+            sub[idx] = avg_cb;
+            sub[++idx] = avg_cr;
+            ++idx;
         }
     }
-
-    // TODO: Return it into an interface-like container:
-    // something like matrix, but for subsampled image.
     return sub;
 }
 
