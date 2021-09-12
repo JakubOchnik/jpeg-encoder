@@ -4,10 +4,9 @@ Work in progress!
 
 ## Working
 - Conversion between RGB and YCbCr color spaces
-- Chroma subsampling (currently works only with 4-pixel groups)
+- 4:1:1 chroma subsampling and desampling
 
 ## TODO:
-- Make chroma subsampling work with any number of pixels
+- 4:2:2 and 4:2:0 subsampling modes
 - DCT
-- Final encoding
-- ... and all of that in reverse.
+- Final encoding (Huffmann etc.)
