@@ -7,7 +7,7 @@
 namespace Debug
 {
     template<typename T>
-    void printSliceArray(T arr, int x, int y, int width, int channels)
+    void printSliceArray(T* arr, int x, int y, int width, int channels)
     {
         int new_x = x * channels;
         for(int i{0}; i < y; ++i)
@@ -27,7 +27,7 @@ namespace Debug
 
         for(int y{0}; y < src.getOrigHeight(); ++y)
         {
-            for(int x{0}; x < src.getOrigHeight(); ++x)
+            for(int x{0}; x < src.getOrigWidth(); ++x)
             {
                 auto srcPixel = src.getPixel(x, y);
                 auto newPixel = decoded.getPixel(x, y);
@@ -44,12 +44,18 @@ namespace Debug
 
 namespace color
 {
-    inline unsigned char s_round(double num)
+    inline unsigned char round_uchar(double num)
     {
-        int out = round(num);
+        // Safe round function
+        // It checks whether the value is in the uchar range
+        int out = static_cast<int>(round(num));
         if(out > 255)
         {
             return 255;
+        }
+        else if(out < 0)
+        {
+            return 0;
         }
         else
         {
@@ -68,12 +74,11 @@ namespace color
             g = raw[i+1];
             b = raw[i+2];
             //Y
-            raw[i] = s_round(0.299 * r + 0.587 * g + 0.114 * b);
-            if(raw[i] )
+            raw[i] = round_uchar(0.299 * r + 0.587 * g + 0.114 * b);
             //Cb
-            raw[i+1] = s_round(128 - 0.168736 * r - 0.331264 * g + 0.5 * b);
+            raw[i+1] = round_uchar(128.0 - 0.168736 * r - 0.331264 * g + 0.5 * b);
             //Cr
-            raw[i+2] = s_round(128 + 0.5 * r - 0.418688 * g - 0.081312 * b);
+            raw[i+2] = round_uchar(128.0 + 0.5 * r - 0.418688 * g - 0.081312 * b);
         }
     }
 
@@ -88,11 +93,11 @@ namespace color
             cb = raw[i+1];
             cr = raw[i+2];
             //R
-            raw[i] = s_round(y + 1.402 * (cr - 128));
+            raw[i] = round_uchar(y + 1.402 * (cr - 128));
             //G
-            raw[i+1] = s_round( y - 0.34414 * (cb - 128) - 0.71414 * (cr - 128));
+            raw[i+1] = round_uchar(y - 0.34414 * (cb - 128) - 0.71414 * (cr - 128));
             //B
-            raw[i+2] = s_round(y + 1.772 * (cb - 128));
+            raw[i+2] = round_uchar(y + 1.772 * (cb - 128));
         }
     }
 }
