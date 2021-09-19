@@ -4,6 +4,7 @@
 #include <lib/imgMatrix.hpp>
 #include <lib/subsampMatrix.hpp>
 #include <lib/subsampler.hpp>
+#include <lib/dct.hpp>
 
 class Encoder
 {

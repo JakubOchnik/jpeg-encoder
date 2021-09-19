@@ -20,6 +20,10 @@ void Encoder::encodeImg()
     std::cout << "Prev size:" << width * height * 3 << "\n Current size:" << subsampled.size() << "\n";
     std::cout << "\n";
 
+    DCTprocess process(subsampled);
+    process.executeDCT();
+
+/*
     // SUBSAMPLING DEBUG:
     // Convert subsampled image back to YCbCr
     std::cout << "Desampling the image...";
@@ -37,7 +41,7 @@ void Encoder::encodeImg()
     Mat after_desampling(height, width, CV_8UC3, raw_desampled);
     cv::imshow("Subsampled image", after_desampling);
     cv::waitKey(0);
-
+*/
     // TODO: Implement Discrete Cosine Transform & Quantization
 
     // TODO: Implement Delta Encoding

@@ -27,3 +27,8 @@ add_executable(sub_mat_get_test ${TEST_DIR}/subMatrix_get.cpp)
 target_link_libraries(sub_mat_get_test INTERFACE matrix sub_mat_get_test PRIVATE smart_assert)
 target_include_directories(sub_mat_get_test PRIVATE ${TEST_DIR}/assert)
 add_test("SubMatrix :: Getters" sub_mat_get_test)
+
+add_executable(dct_test ${TEST_DIR}/dct_methods.cpp)
+target_link_libraries(dct_test INTERFACE matrix dct_test PRIVATE smart_assert dct)
+target_include_directories(dct_test PRIVATE ${TEST_DIR}/assert)
+add_test("DCT :: Various" dct_test)

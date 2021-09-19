@@ -27,12 +27,17 @@ class SubMatrix : public BaseMatrix<T>
     uint8_t gs_y;
 
 public:
-
-    SubMatrix(const BaseMatrix<T>&, SubsamplingType);
     SubMatrix();
     ~SubMatrix();
 
+    // Constructs an empty Subsampled Matrix (to be filled in the future)
+    SubMatrix(const BaseMatrix<T>&, SubsamplingType);
+
+    // Copy constructor
     SubMatrix(const SubMatrix<T>& other);
+
+    // Constructor used mainly for testing purposes
+    SubMatrix(const std::vector<std::vector<T>>& srcArr, SubsamplingType _type);
 
     // Getters
     uint8_t getGsX() const;
@@ -47,17 +52,21 @@ public:
     // Raw, 2D operator (x is counted with channels, y is the same as pixel height)
     virtual T& operator()(size_t x, size_t y);
 
-    // Pixel index operator with channel selector (range: 0-channels)
-    T& operator()(size_t x, size_t y, uint8_t ch);
+    // Pixel group getter with channel selector (usual range for 4-pixel group: 0-6 (Y Y Y Y Cb Cr))
+    T& getGrComp(size_t x, size_t y, uint8_t comp);
 
+    // REAL pixel operator with channel selector
+    T& operator()(size_t x, size_t y, uint8_t ch);
     // This function returns a vector of REFERENCES to components of a pixel group
     const std::tuple<std::vector<ref_wrap<T>>, ref_wrap<T>, ref_wrap<T>> getGroup(size_t x, size_t y);
     // This function returns a vector of REFERENCES to Y, Cb, Cr channels of a REAL pixel
     const std::vector<ref_wrap<T>> getPixel(size_t x, size_t y);
-    T& getPixelComponent(size_t x, size_t y, uint8_t comp);
 
     // Prints a matrix (cout)
     void printMatrix() override;
+
+    // Duplicates the last row N times
+    void duplicateLastRow(const int N);
 
 };
 
@@ -76,7 +85,7 @@ inline SubMatrix<T>::SubMatrix(const BaseMatrix<T>& img, SubsamplingType type): 
         this->gs_y = 1;
         this->orig_height = img.getHeight();
         this->orig_width = img.getWidth();
-        this->width = ceil(this->orig_width / 4);
+        this->width = ceil(this->orig_width / gs_x);
         this->length = ceil(this->width * this->height * (gs_x + 2));
         this->f_width = ceil(this->width * (gs_x + 2));
         this->raw_data = new T[this->length];
@@ -139,35 +148,25 @@ inline T& SubMatrix<T>::operator[](size_t index)
 }
 
 template<typename T>
-inline T& SubMatrix<T>::operator()(size_t x, size_t y, uint8_t comp)
+inline T& SubMatrix<T>::getGrComp(size_t x, size_t y, uint8_t comp)
 {
     if(x > this->width - 1 || y > this->height - 1)
     {
         throw std::runtime_error("Index out of bounds");
     }
+    size_t base_idx{};
     // TODO: CONSIDER 422 AND 420
     if(this->type == SubsamplingType::s411)
     {   
-        // Pixel_length = number of Y components (group pixels) + Cb + Cr
+        // Group_length = number of Y components (group pixels) + Cb + Cr
         if(comp > this->gs_x + 2 - 1) 
         {
             throw std::runtime_error("Channel number out of range");
         }
-    }
-    return getPixelComponent(x,y,comp);
-}
-
-template<typename T>
-inline T& SubMatrix<T>::getPixelComponent(size_t x, size_t y, uint8_t comp)
-{
-    // Returns a vector of REFERENCES to each particular component
-    // R, G, B; Y, Cb, Cr; etc.
-    // TODO: CONSIDER 422 AND 420
-    if(this->type == SubsamplingType::s411)
-    {
-        size_t base_idx = (x + y * this->width) * (this->gs_x + 2);
+        base_idx = (x + y * this->width) * (this->gs_x + 2);
         return this->raw_data[base_idx + comp];
     }
+    return this->raw_data[base_idx + comp];
 }
 
 template<typename T>
@@ -195,9 +194,47 @@ inline const std::tuple<std::vector<ref_wrap<T>>, ref_wrap<T>, ref_wrap<T>> SubM
 }
 
 template<typename T>
+inline T& SubMatrix<T>::operator()(size_t x, size_t y, uint8_t ch)
+{
+    if(x > this->orig_width - 1 || y > this->height - 1)
+    {
+        throw std::runtime_error("Coordinate(s) out of bounds");
+    }
+    if(ch > this->channels)
+    {
+        throw std::runtime_error("Pixel channel out of bounds");
+    }
+    // TODO: Other modes
+    if(this->type == SubsamplingType::s411)
+    {
+        // At first: localize the proper group
+            /*
+            0  1 2  3       4   5  6  7 
+            (1 4 7 10 7 8) (13 16 19 22 19 20)
+            8  9  10 11        12  13 14 15  
+            (25 28 31 34 31 32) (37 40 43 46 43 44)
+            */
+
+        auto x_idx = static_cast<int>(x / 4);
+        // (x_idx, y)
+        // As x_idx is intentionally truncated, calculate the offset using
+        // the original index.
+        if(ch == 0)
+        {
+            auto offset = x % 4;
+            return getGrComp(x_idx, y, offset);
+        }
+        else
+        {
+            return getGrComp(x_idx, y, 3 + ch);
+        }
+    }
+}
+
+template<typename T>
 inline const std::vector<ref_wrap<T>> SubMatrix<T>::getPixel(size_t x, size_t y)
 {
-    if(x > this->orig_width - 1 || y > this->orig_height - 1)
+    if(x > this->orig_width - 1 || y > this->height - 1)
     {
         throw std::runtime_error("Coordinate(s) out of bounds");
     }
@@ -217,9 +254,9 @@ inline const std::vector<ref_wrap<T>> SubMatrix<T>::getPixel(size_t x, size_t y)
         // As x_idx is intentionally truncated, calculate the offset using
         // the original index.
         auto offset = x % 4;
-        auto Y = ref_wrap<T>((*this)(x_idx, y, offset));
-        auto Cb = ref_wrap<T>((*this)(x_idx, y, 4));
-        auto Cr = ref_wrap<T>((*this)(x_idx, y, 5));
+        auto Y = ref_wrap<T>(getGrComp(x_idx, y, offset));
+        auto Cb = ref_wrap<T>(getGrComp(x_idx, y, 4));
+        auto Cr = ref_wrap<T>(getGrComp(x_idx, y, 5));
 
         std::vector<ref_wrap<T>> out = {Y, Cb, Cr};
         return out;
@@ -278,4 +315,63 @@ template<typename T>
 uint16_t SubMatrix<T>::getOrigHeight() const
 {
     return this->orig_height;
+}
+
+template<typename T>
+inline void SubMatrix<T>::duplicateLastRow(const int N)
+{
+    size_t new_length = this->length + this->f_width * N;
+    T* raw_new = nullptr;
+    try
+    {
+        raw_new = new T[new_length];
+    }
+    catch(...)
+    {
+        throw;
+    }
+
+    // copy existing array
+    memcpy(raw_new, this->raw_data, this->length*sizeof(T));
+    // copy last row
+    size_t idx = 0 + this->f_width * (this->height - 1);
+    size_t dst_idx = this->length;
+    for(int i{0}; i<N; ++i)
+    {
+        memcpy(&raw_new[dst_idx], &this->raw_data[idx], this->f_width * sizeof(T));
+        dst_idx += this->f_width;
+    }
+    
+    // Assume, that current data is allocated on the heap.
+    if(this->memoryManaged)
+        delete [] this->raw_data;
+
+    this->memoryManaged = true;
+    this->raw_data = raw_new;
+    this->height += N;
+    this->length += N * this->f_width;
+}
+
+template<typename T>
+SubMatrix<T>::SubMatrix(const std::vector<std::vector<T>>& srcArr, SubsamplingType _type)
+{
+    // If 4:1:1
+    this->gs_x = 4;
+    this->gs_y = 1;
+
+    this->f_width = srcArr[0].size();
+    this->width = this->f_width / (gs_x + 2);
+    this->height = srcArr.size();
+
+    this->orig_height = this->height;
+    this->orig_width =  this->width * gs_x;
+
+    this->length = srcArr.size() * srcArr[0].size();
+    this->raw_data = new T[this->length];
+    this->type = _type;
+    for(int i{0}; i < srcArr.size(); ++i)
+    {
+        memcpy(&this->raw_data[srcArr[0].size() * i], srcArr[i].data(), srcArr[0].size()*sizeof(T));
+    }
+    this->memoryManaged = true;
 }
