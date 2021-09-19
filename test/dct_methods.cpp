@@ -130,6 +130,10 @@ int main()
 
     std::array<std::array<int16_t,8>,8> dctArray;
     dstDCT.calculateDCT(yBlock, dctArray, dstDCT.getCosLookup(8), 8);
-    printMatrix(dctArray);
     M_Assert(matricesEqual(correctVal.dct, dctArray), "calculateDCT(blockArray& srcBlock, DCTarray& dstDCT, const cosineLookup& cosLookup, const uint8_t N);: Incorrect DCT output");
+    
+    dstDCT.quantizeBlock(dctArray, 8);
+    std::array<std::array<int16_t,8>,8> dctArray2;
+    dstDCT.calculateAndQuantize(yBlock, dctArray2, dstDCT.getCosLookup(8), 8);
+    M_Assert(matricesEqual(dctArray, dctArray2), "calculateAndQuantize/quantize: Non-equal quantized output");    
 }

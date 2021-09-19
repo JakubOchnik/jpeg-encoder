@@ -51,6 +51,40 @@ void DCTprocess::calculateDCT(blockArray& srcBlock, DCTarray& dstDCT, const cosi
     }
 }
 
+void DCTprocess::quantizeBlock(DCTarray& dct, const uint8_t N)
+{
+    for(int y{0}; y < N; ++y)
+    {
+        for(int x{0}; x < N; ++x)
+        {
+            dct[y][x] = roundf(dct[y][x] / quantizationMatrix[y][x]);
+        }
+    }
+}
+
+void DCTprocess::calculateAndQuantize(blockArray& srcBlock, DCTarray& dstDCT, const cosineLookup& cosLookup, const uint8_t N)
+{
+    for(uint8_t i{0}; i < N; ++i)
+    {
+        for(uint8_t j{0}; j < N; ++j)
+        {
+            float temp{};
+            for(uint8_t y{0}; y < N; ++y)
+            {
+                for(uint8_t x{0}; x < N; ++x)
+                {
+                    temp += cosLookup[x][i] * cosLookup[y][j] * srcBlock[x][y];
+                }
+            }
+            float coeff{(i > 0 ? 1.0f : 1.0f/sqrtf(2)) * (j > 0 ? 1.0f : 1.0f/sqrtf(2))};
+            temp *= 1/sqrtf(2 * N) * coeff;
+            dstDCT[i][j] = roundf(temp);
+            // Quantization
+            dstDCT[i][j] = roundf(dstDCT[i][j] / quantizationMatrix[i][j]);
+        }
+    }
+}
+
 void DCTprocess::executeDCT()
 {
     // There is a large chance that this will not be needed

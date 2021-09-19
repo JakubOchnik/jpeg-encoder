@@ -42,7 +42,11 @@ public:
     cosineLookup getCosLookup(size_t N);
     void getYBlock411(std::array<std::array<uint8_t,8>,8>& matrix, const size_t x, const size_t y);
     void getColorBlock411(std::array<std::array<uint8_t,8>,8>& matrix, const size_t x, const size_t y);
+
     void calculateDCT(blockArray& srcBlock, DCTarray& dstDCT, const cosineLookup& cosLookup, const uint8_t N);
+    void quantizeBlock(DCTarray& dct, const uint8_t N);
+
+    void calculateAndQuantize(blockArray& srcBlock, DCTarray& dstDCT, const cosineLookup& cosLookup, const uint8_t N);
 
     DCTprocess(SubMatrix<unsigned char>& src);
     void executeDCT();    
