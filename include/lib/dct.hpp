@@ -28,26 +28,32 @@ class DCTprocess
     SubMatrix<unsigned char>& srcMat;
     SubsamplingType type;
 public:
+    DCTprocess(SubMatrix<unsigned char>& src);
+    // Get Cosines lookup table
+    cosineLookup getCosLookup(size_t N);
+    // Get all values of the Y 8x8 block channel: {0 -> Y, 1 -> Cb, 2 -> Cr}
+    void getBlock411(std::array<std::array<uint8_t,8>,8>& matrix, const size_t x, const size_t y, const int8_t channel);
+    // Get all values of the Cb/Cr 8x8 block. channel: {0 -> Cb, 1 -> Cr}
+    //void getColorBlock411(std::array<std::array<uint8_t,8>,8>& matrix, const size_t startX, const size_t startY, const int8_t channel);
     /*
     Type-II DCT:
     - Process each channel (Y, Cb, Cr) separatedly
     - Divide matrix of each channel into 8x8 sub-matrices (repeat edges if the width/length is not dividable by 8)
     For every block:
-    1) Normalize the values - subtract 128
-    2) Take the 2D DCT which is given by: https://en.wikipedia.org/wiki/JPEG#Block_splitting (Discrete cosine transform)
-    [Test on the values from Wikipedia]
+    1) Normalize the values - subtract 128 (currently skipped)
+    2) Take the 2D DCT which is given by formula: https://en.wikipedia.org/wiki/JPEG#Block_splitting (Discrete cosine transform)
+    [Test on the values from https://cs.stanford.edu/people/eroberts/courses/soco/projects/data-compression/lossy/jpeg/dct.htm, except
+    DC coeff and 19 in the upper right corner]
     3) Quantize the matrix
-    4) Replace the new matrix
     */
-    cosineLookup getCosLookup(size_t N);
-    void getYBlock411(std::array<std::array<uint8_t,8>,8>& matrix, const size_t x, const size_t y);
-    void getColorBlock411(std::array<std::array<uint8_t,8>,8>& matrix, const size_t x, const size_t y);
 
+    // Calculate DCT for the block
     void calculateDCT(blockArray& srcBlock, DCTarray& dstDCT, const cosineLookup& cosLookup, const uint8_t N);
+    // Quantize the block
     void quantizeBlock(DCTarray& dct, const uint8_t N);
-
+    // Calculate the quantized DCT for the block
     void calculateAndQuantize(blockArray& srcBlock, DCTarray& dstDCT, const cosineLookup& cosLookup, const uint8_t N);
 
-    DCTprocess(SubMatrix<unsigned char>& src);
+    // Perform DCT on the whole image
     void executeDCT();    
 };

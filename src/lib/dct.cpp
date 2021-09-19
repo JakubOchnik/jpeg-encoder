@@ -17,13 +17,13 @@ cosineLookup DCTprocess::getCosLookup(size_t N)
     return cosines;
 }
 
-void DCTprocess::getYBlock411(std::array<std::array<uint8_t,8>,8>& matrix, const size_t startX, const size_t startY)
+void DCTprocess::getBlock411(std::array<std::array<uint8_t,8>,8>& matrix, const size_t startX, const size_t startY, const int8_t channel)
 {
     for(size_t y{startY}; y < startY + 8; ++y)
     {
         for(size_t x{startX}; x < startX + 8; ++x)
         {
-            matrix[y-startY][x-startX] = srcMat(x, y, 0);
+            matrix[y-startY][x-startX] = srcMat(x, y, channel);
         }
     }
 }
@@ -114,7 +114,7 @@ void DCTprocess::executeDCT()
             for(size_t x{0}; x < srcMat.getOrigWidth(); x+=8)
             {
                 // Get the Y
-                getYBlock411(Y_block, x, y);
+                getBlock411(Y_block, x, y, 0);
                 DCTarray output_DCT;
                 calculateDCT(Y_block, output_DCT, cosLookup, 8);
             }

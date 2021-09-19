@@ -46,6 +46,30 @@ public:
         {136,156,123,167,162,144,140,147},
         {148,155,136,155,152,147,147,136}
     };
+
+    const std::vector<std::vector<unsigned int>> cbBlock =
+    {
+        {123,123,123,123,121,121,121,121},
+        {173,173,173,173,100,100,100,100},
+        {88,88,88,88,136,136,136,136},
+        {122,122,122,122,173,173,173,173},
+        {93,93,93,93,95,95,95,95},
+        {90,90,90,90,168,168,168,168},
+        {63,63,63,63,197,197,197,197},
+        {92,92,92,92,126,126,126,126}
+    };
+
+    const std::vector<std::vector<unsigned int>> crBlock =
+    {
+        {177,177,177,177,83,83,83,83},
+        {138,138,138,138,89,89,89,89},
+        {54,54,54,54,134,134,134,134},
+        {126,126,126,126,73,73,73,73},
+        {122,122,122,122,83,83,83,83},
+        {100,100,100,100,101,101,101,101},
+        {80,80,80,80,154,154,154,154},
+        {124,124,124,124,135,135,135,135}
+    };
     
     const std::vector<std::vector<int16_t>> dct = 
     {
@@ -119,21 +143,32 @@ void printMatrix(const T& mat)
 int main()
 {
     InternalVars correctVal;
-    SubMatrix inputMat(correctVal.rawSubsampled, SubsamplingType::s411);
+    SubMatrix inputMat(correctVal.rawSubsampled, SubsamplingType::s411, 3);
     DCTprocess dstDCT(inputMat);
 
     M_Assert(matricesEqualFloat(correctVal.cosLookup, dstDCT.getCosLookup(8)), "DCTprocess::getCosLookup(size_t N): Incorrect cos lookup table");
 
+    // Y
     std::array<std::array<uint8_t,8>,8> yBlock;
-    dstDCT.getYBlock411(yBlock,0,0);
-    M_Assert(matricesEqual(correctVal.yBlock, yBlock), "getYBlock411(std::array<std::array<uint8_t,8>,8>& matrix, const size_t x, const size_t y): Incorrect block");
+    dstDCT.getBlock411(yBlock,0,0,0);
+    M_Assert(matricesEqual(correctVal.yBlock, yBlock), "getBlock411(matrix, x,  y, channel) [Y]: Incorrect block");
 
     std::array<std::array<int16_t,8>,8> dctArray;
     dstDCT.calculateDCT(yBlock, dctArray, dstDCT.getCosLookup(8), 8);
-    M_Assert(matricesEqual(correctVal.dct, dctArray), "calculateDCT(blockArray& srcBlock, DCTarray& dstDCT, const cosineLookup& cosLookup, const uint8_t N);: Incorrect DCT output");
+    M_Assert(matricesEqual(correctVal.dct, dctArray), "calculateDCT(blockArray& srcBlock, DCTarray& dstDCT, const cosineLookup& cosLookup, const uint8_t N) [Y]: Incorrect DCT output");
     
     dstDCT.quantizeBlock(dctArray, 8);
     std::array<std::array<int16_t,8>,8> dctArray2;
     dstDCT.calculateAndQuantize(yBlock, dctArray2, dstDCT.getCosLookup(8), 8);
-    M_Assert(matricesEqual(dctArray, dctArray2), "calculateAndQuantize/quantize: Non-equal quantized output");    
+    M_Assert(matricesEqual(dctArray, dctArray2), "calculateAndQuantize/quantize [Y]: Non-equal quantized output");  
+
+    // Cb
+    std::array<std::array<uint8_t,8>,8> cbBlock;
+    dstDCT.getBlock411(cbBlock,0,0,1);
+    M_Assert(matricesEqual(correctVal.cbBlock, cbBlock), "getBlock411(matrix, x,  y, channel) [Cb]: Incorrect block");
+
+    // Cr
+    std::array<std::array<uint8_t,8>,8> crBlock;
+    dstDCT.getBlock411(crBlock,0,0,2);
+    M_Assert(matricesEqual(correctVal.crBlock, crBlock), "getBlock411(matrix, x,  y, channel) [Cr]: Incorrect block");
 }

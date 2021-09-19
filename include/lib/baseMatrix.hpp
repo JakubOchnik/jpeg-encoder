@@ -31,16 +31,16 @@ public:
     BaseMatrix(uint16_t w, uint16_t h, uint8_t ch, bool mem);
     BaseMatrix();
 
-    // Pixel imensions of an image
+    // Pixel dimensions of an image
     uint16_t getWidth() const;
     uint16_t getHeight() const;
-    // F_width is a 'real' width of matrix (multiplied by number of channels)
+    // F_width is a 'real' width of matrix (width multiplied by number of channels)
     uint16_t getF_width() const;
     uint16_t getF_height() const;
     uint8_t getChannels() const;
     T* getRawPointer() const;
 
-    // Real size getter
+    // Real size (flat array length) getter
     size_t size() const;
 
     // Prints a matrix (cout)

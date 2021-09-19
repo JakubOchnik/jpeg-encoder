@@ -37,7 +37,7 @@ public:
     SubMatrix(const SubMatrix<T>& other);
 
     // Constructor used mainly for testing purposes
-    SubMatrix(const std::vector<std::vector<T>>& srcArr, SubsamplingType _type);
+    SubMatrix(const std::vector<std::vector<T>>& srcArr, SubsamplingType _type, const uint8_t channels);
 
     // Getters
     uint8_t getGsX() const;
@@ -353,8 +353,10 @@ inline void SubMatrix<T>::duplicateLastRow(const int N)
 }
 
 template<typename T>
-SubMatrix<T>::SubMatrix(const std::vector<std::vector<T>>& srcArr, SubsamplingType _type)
+SubMatrix<T>::SubMatrix(const std::vector<std::vector<T>>& srcArr, SubsamplingType _type, const uint8_t channels)
 {
+    this->channels = channels;
+
     // If 4:1:1
     this->gs_x = 4;
     this->gs_y = 1;
