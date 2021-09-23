@@ -101,10 +101,8 @@ void DCTprocess::executeDCT()
 
     const auto cosLookup = getCosLookup(8);
     // Pre-allocate space for 8x8 matrices
-    blockArray Y_block;
-    blockArray Cb_block;
-    blockArray Cr_block;
-
+    blockArray yBlock, cbBlock, crBlock;
+    DCTarray yDct, cbDct, crDct;
     // Perform DCT for each block
     if(type == SubsamplingType::s411)
     {
@@ -113,12 +111,68 @@ void DCTprocess::executeDCT()
         {
             for(size_t x{0}; x < srcMat.getOrigWidth(); x+=8)
             {
-                // Get the Y
-                getBlock411(Y_block, x, y, 0);
-                DCTarray output_DCT;
-                calculateDCT(Y_block, output_DCT, cosLookup, 8);
+                // Y
+                getBlock411(yBlock, x, y, 0);
+                calculateAndQuantize(yBlock, yDct, cosLookup, 8);
+                // Cb
+                getBlock411(cbBlock, x, y, 1);
+                calculateAndQuantize(cbBlock, cbDct, cosLookup, 8);
+                // Cr
+                getBlock411(crBlock, x, y, 2);
+                calculateAndQuantize(crBlock, crDct, cosLookup, 8);
             }
             // Y
+        }
+    }
+}
+
+void DCTprocess::zigZagScan(DCTarray& dct, const uint8_t N, std::vector<int16_t>& output)
+{
+    int curX{}, curY{};
+    bool down{false};
+    std::vector<std::pair<int, int>> positions;
+    output.push_back(dct[curY][curX]);
+    while(!(curX == N - 1 && curY == N - 1))
+    {
+        if(down)
+        {
+            if (curY == N - 1)
+            {
+                ++curX;
+            }
+            else
+            {
+                ++curY;
+            }
+            output.push_back(dct[curY][curX]);
+            while(curX < N - 1 && curY > 0)
+            {
+                ++curX;
+                --curY;
+                output.push_back(dct[curY][curX]);
+            }
+            down = false;
+            continue;
+        }
+        else
+        {
+            if(curX == N - 1)
+            {
+                ++curY;
+            }
+            else
+            {
+                ++curX;
+            }
+            output.push_back(dct[curY][curX]);
+            while(curY < N - 1 && curX > 0)
+            {
+                --curX;
+                ++curY;
+                output.push_back(dct[curY][curX]);
+            }
+            down = true;
+            continue;
         }
     }
 }

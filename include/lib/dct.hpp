@@ -54,6 +54,9 @@ public:
     // Calculate the quantized DCT for the block
     void calculateAndQuantize(blockArray& srcBlock, DCTarray& dstDCT, const cosineLookup& cosLookup, const uint8_t N);
 
+    //
+    void zigZagScan(DCTarray& dct, const uint8_t N, std::vector<int16_t>& output);
+
     // Perform DCT on the whole image
     void executeDCT();    
 };

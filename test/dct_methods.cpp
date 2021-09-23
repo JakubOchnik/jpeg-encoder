@@ -9,7 +9,22 @@
 
 class InternalVars
 {
+private:
+    std::vector<int16_t> prepareZigZagged()
+    {
+        std::vector<int16_t> beginning{75, -1, 1, 0, -2, 1, 0, 1, -1, 0}; // 10
+        std::vector<int16_t> output(64-10, 0);
+        output.insert(output.begin(),beginning.begin(), beginning.end());
+        return output;
+    }
 public:
+    InternalVars()
+    {
+        zigZagged = prepareZigZagged();
+    }
+
+    std::vector<int16_t> zigZagged;
+
     const std::vector<std::vector<unsigned char>> rawSubsampled = 
     {
         {140,144,147,140,123,177,140,155,179,175,121,83},
@@ -127,14 +142,41 @@ bool matricesEqual(T first, U second)
     return true;
 }
 
-template<typename T>
-void printMatrix(const T& mat)
+template<typename T, typename U>
+bool vectorsEqual(T first, U second)
 {
+    if(first.size() != second.size())
+    {
+        return false;
+    }
+
+    for(int i{0}; i < first.size(); ++i)
+    {
+        if(first[i] != second[i])
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
+template<typename T>
+void printMatrix(const T& mat, bool printComma)
+{
+    char separator;
+    if(printComma)
+    {
+        separator = ',';
+    }
+    else
+    {
+        separator = ' ';
+    }
     for(int y{0}; y < mat.size(); ++y)
     {
         for(int x{0}; x < mat[0].size(); ++x)
         {
-            std::cout << (int)mat[y][x] << ",";
+            std::cout << (int)mat[y][x] << separator;
         }
         std::cout << "\n";
     }
@@ -171,4 +213,9 @@ int main()
     std::array<std::array<uint8_t,8>,8> crBlock;
     dstDCT.getBlock411(crBlock,0,0,2);
     M_Assert(matricesEqual(correctVal.crBlock, crBlock), "getBlock411(matrix, x,  y, channel) [Cr]: Incorrect block");
+
+    std::vector<int16_t> zigZaggedOutput;
+    zigZaggedOutput.reserve(64);
+    dstDCT.zigZagScan(dctArray, 8, zigZaggedOutput);
+    M_Assert(vectorsEqual(correctVal.zigZagged, zigZaggedOutput), "zigZagScan: Incorrect scan output");
 }
